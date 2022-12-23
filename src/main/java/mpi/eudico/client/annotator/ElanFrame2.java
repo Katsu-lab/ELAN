@@ -121,6 +121,13 @@ import mpi.eudico.client.annotator.commands.global.UpdateElanMA;
 import mpi.eudico.client.annotator.commands.global.UpdateMultiForECVMA;
 import mpi.eudico.client.annotator.commands.global.ValidateEAFMA;
 import mpi.eudico.client.annotator.commands.global.WebMA;
+
+// Added by Katsuya Fukuoka 2022/12/20
+import mpi.eudico.client.annotator.commands.global.DataEditorMA;
+import mpi.eudico.client.annotator.commands.global.RuleCreatorMA;
+import mpi.eudico.client.annotator.commands.global.InteractionInterpretationMA;
+//
+
 import mpi.eudico.client.annotator.gui.ElanMenuItem;
 import mpi.eudico.client.annotator.gui.FileChooser;
 import mpi.eudico.client.annotator.linkedmedia.LinkedFileDescriptorUtil;
@@ -150,18 +157,18 @@ import nl.mpi.util.FileUtility;
 @SuppressWarnings("serial")
 public class ElanFrame2 extends JFrame implements ActionListener,
     ElanLocaleListener, FrameConstants, PreferencesUser {
-	/** a list of actions for menu containers and a few transcription independent 
+	/** a list of actions for menu containers and a few transcription independent
 	 * actions */
     protected Map<String, MenuAction> menuActions = new HashMap<String, MenuAction>();
-  
+
     /** a map for actions that are added to the menubar's action map
      * this storage is needed for detaching and re-attaching actions to the menu bar */
     protected Map<Object, Action> registeredActions = new HashMap<Object, Action>();
-    
+
     protected boolean initialized = false;
     public final int WINDOW_POS_MARGIN = 30;
     protected String applicationName = "ELAN " + ELAN.getVersionString();
-    
+
     // load some keybindings for the Mac
     static {
         if (System.getProperty("os.name").indexOf("Mac") > -1) {
@@ -225,13 +232,14 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     private JCheckBoxMenuItem menuItemNativeMedia;
     private JRadioButtonMenuItem menuItemAnnoMode;
     private JRadioButtonMenuItem menuItemSyncMode;
-    private JRadioButtonMenuItem menuItemTranscMode; 
-    private JRadioButtonMenuItem menuItemSegmentMode; 
+    private JRadioButtonMenuItem menuItemTranscMode;
+    private JRadioButtonMenuItem menuItemSegmentMode;
     private JRadioButtonMenuItem menuItemInterLinearMode;
     private JCheckBoxMenuItem menuItemKioskMode;
     private JMenuItem menuItemPlayAround;
     private JMenuItem menuItemRateVol;
     protected JMenu menuHelp;
+    protected JMenu menuEmpathy;
     private JMenu menuFrameLength;
     private JMenu menuAppLanguage;
     private ButtonGroup languageBG;
@@ -274,7 +282,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 	private ElanMenuItem editLexiconServiceMI;
 	private ElanMenuItem copyCurrentTimeCodeMI;
 	private ElanMenuItem compareAnnotatorsMI;
-	
+
 	private JCheckBoxMenuItem menuItemGridViewer;
 	private JCheckBoxMenuItem menuItemTextViewer;
 	private JCheckBoxMenuItem menuItemSubtitleViewer;
@@ -290,7 +298,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 
 	private RecentLanguagesMenuItem recentLanguagesMenuItem;
 
-	
+
     /**
      * The no arg constructor creates an empty elan frame containing a menubar
      * with a limited set of menu items.
@@ -313,7 +321,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
      */
     public ElanFrame2(final String path) {
         this();
-        
+
         if (path != null) {
 	        SwingUtilities.invokeLater(new Runnable() {
 	                @Override
@@ -332,7 +340,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
      */
     public ElanFrame2(final String eafPath, final List<String> mediaFiles) {
         this();
-        
+
         if (eafPath != null) {
 	        SwingUtilities.invokeLater(new Runnable() {
 	                @Override
@@ -363,31 +371,31 @@ public class ElanFrame2 extends JFrame implements ActionListener,
             }
         }
     }
-    
+
     private boolean isMediaFile(String file){
     	 for (String element : FileExtension.MISC_VIDEO_EXT) {
              if (file.endsWith(element)) {
                return true;
              }
          }
-    	 
+
     	 for (String element : FileExtension.MPEG_EXT) {
              if (file.endsWith(element)) {
                return true;
              }
          }
-    	 
+
     	 for (String element : FileExtension.WAV_EXT) {
              if (file.endsWith(element)) {
                return true;
              }
          }
-    	 
+
     	 for (String element : FileExtension.MISC_AUDIO_EXT) {
              if (file.endsWith(element)) {
                return true;
              }
-         }    	 
+         }
     	 return false;
     }
 
@@ -401,34 +409,34 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     	boolean isRemote = FileUtility.isRemoteFile(fullPath);
     	String lowerPath = null;
     	File fileTemp = null;
-    	
+
     	if (!isRemote) {
 	        fileTemp = new File(fullPath);
-	
+
 	        //check if file exists and is a file
 	        if (!fileTemp.exists() || fileTemp.isDirectory()) {
 	            String strMessage = ElanLocale.getString("Menu.Dialog.Message1");
 	            strMessage += fullPath;
 	            strMessage += ElanLocale.getString("Menu.Dialog.Message2");
-	
+
 	            String strError = ElanLocale.getString("Message.Error");
 	            JOptionPane.showMessageDialog(this, strMessage, strError,
 	                JOptionPane.ERROR_MESSAGE);
-	
+
 	            return;
-	        }    
+	        }
 	        lowerPath = fileTemp.toString().toLowerCase();
     	} else {
     		lowerPath = fullPath.toLowerCase();
     	}
-    	
+
     	//check if file is a media File
-        if(isMediaFile(lowerPath)){     
+        if(isMediaFile(lowerPath)){
         	 String strMessage = fullPath;
-             strMessage += ElanLocale.getString("Menu.Dialog.Message4");           
+             strMessage += ElanLocale.getString("Menu.Dialog.Message4");
 
              String strWarning = ElanLocale.getString("Message.Warning");
-             
+
         	int i = JOptionPane.showOptionDialog(this, strMessage, strWarning, JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, null, null);
        		if(i == JOptionPane.YES_OPTION){
        			if(menuItemFileNew.getAction() instanceof NewMA){
@@ -437,9 +445,9 @@ public class ElanFrame2 extends JFrame implements ActionListener,
        				((NewMA)menuItemFileNew.getAction()).createNewFile(v);
        			}
        			return;
-       		} 
+       		}
        	}
-       
+
         //check if file is a '.eaf' file
         if (!lowerPath.endsWith(".eaf") && !lowerPath.endsWith(".etf")) {
             String strMessage = ElanLocale.getString("Menu.Dialog.Message1");
@@ -464,7 +472,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 				path = fileTemp.getAbsolutePath();
 	            // replace all backslashes by forward slashes
 	            path = path.replace('\\', '/');
-	
+
 	            //long before = System.currentTimeMillis();
 	            transcription = new TranscriptionImpl(new File(path).getAbsolutePath());
         	} else {
@@ -476,7 +484,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
             transcription.setUnchanged();
             // temporary check if preferences have to be converted between versions
             SaveAs27Preferences.adjustPreferencesAfterLoadingFormat(transcription);
-            
+
 	        if (lowerPath.endsWith(".etf")) {
                 transcription.setName(TranscriptionImpl.UNDEFINED_FILE_NAME);
 
@@ -493,7 +501,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 	            			Preferences.importPreferences(transcription, prefPath);
 	            		}
 	            	} catch (Exception ex) {// catch any exception and continue
-	            		
+
 	            	}
                 }
             }
@@ -502,13 +510,13 @@ public class ElanFrame2 extends JFrame implements ActionListener,
             String pref = Preferences.getString(Preferences.PREF_ML_LANGUAGE, null);
             if (pref != null) {
                 transcription.updateCVLanguage(pref, false);
-            } 
+            }
             // in case of eaf and etf files load external controlled vocabularies
             if (transcription.getControlledVocabularies().size() > 0) {
             	new TranscriptionECVLoader().loadExternalCVs(transcription, this);// this can set the changed flag
             }
             // load a set of lexicon client factories? or delay until needed?
-            
+
             if (mediaFiles != null) {
                 List<MediaDescriptor> descriptors = MediaDescriptorUtility.createMediaDescriptors(mediaFiles);
 
@@ -518,12 +526,12 @@ public class ElanFrame2 extends JFrame implements ActionListener,
             }
 
             String eafPath = FileUtility.directoryFromPath(path);
-            
+
             @SuppressWarnings("unused")
 			boolean validMedia = checkMedia(transcription, eafPath);
             // HS 10-2019 returning here in case of incomplete media prevents proper cleanup and
-            // leaves the FrameManager in an inconsistent state. 
-            // This check should preferably happen before creating the frame, or the frame 
+            // leaves the FrameManager in an inconsistent state.
+            // This check should preferably happen before creating the frame, or the frame
             // should be properly cleaned up when opening is aborted here.
             /* could show info message that media are incomplete?
             if (!validMedia) {
@@ -549,8 +557,8 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 
                 //new InitThread(transcriptionForThisFrame.getName()).start();
                 initElan();
-                
-                FrameManager.getInstance().updateFrameTitle(this, 
+
+                FrameManager.getInstance().updateFrameTitle(this,
                 		transcription.getPathName());
             }
         } catch (Exception e) {
@@ -566,21 +574,21 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     public void openEAF(String fullPath) {
         openEAF(fullPath, null);
     }
-    
+
     /**
-     * Sets the transcription (document) for this frame. Only effective if this 
-     * frame is an empty frame, if there already is an transcription this 
+     * Sets the transcription (document) for this frame. Only effective if this
+     * frame is an empty frame, if there already is an transcription this
      * method simply returns.
-     * 
+     *
      * @param transcription the transcription object
      */
     protected void setTranscription(Transcription transcription) {
-    	if (transcriptionForThisFrame != null || 
+    	if (transcriptionForThisFrame != null ||
     			!(transcription instanceof TranscriptionImpl)) {
     		return;
     	}
     	transcriptionForThisFrame = transcription;
-    	
+
     	initElan();
     }
 
@@ -592,16 +600,16 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     public ViewerManager2 getViewerManager() {
         return viewerManager;
     }
-    
+
     /**
      * Returns the Elan layout manager.
-     * 
+     *
      * @return the layout manager
      */
     public ElanLayoutManager getLayoutManager() {
     	return layoutManager;
     }
-    
+
 	/**
 	 * Set the "proxy icon" in the title bar, if we have a valid file name.
 	 */
@@ -609,7 +617,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         if (SystemReporting.isMacOS()) {
     		File f = null;
         	String fileName = transcriptionForThisFrame.getFullPath();
-        	if (fileName != null && 
+        	if (fileName != null &&
         		!TranscriptionImpl.UNDEFINED_FILE_NAME
         			.equals(transcriptionForThisFrame.getName())) {
     			fileName = FileUtility.urlToAbsPath(fileName);
@@ -618,7 +626,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     		getRootPane().putClientProperty("Window.documentFile", f);
 		}
 	}
-	
+
 	/**
 	 * Sets the icon for the frame.
 	 * Could move the retrieval of the icon to the main class or Constants.
@@ -638,19 +646,19 @@ public class ElanFrame2 extends JFrame implements ActionListener,
      * @param transcription the loaded transcription
      * @param eafFolderPath the folder containing the source eaf file
      *
-     * @return {@code true} if the media descriptors are valid, i.e. the media 
+     * @return {@code true} if the media descriptors are valid, i.e. the media
      * files' locations have been resolved, {@code false} otherwise
      */
     public boolean checkMedia(Transcription transcription, String eafFolderPath) {
         boolean validMedia = true;
         boolean saveChangedMedia = true;
-        
+
         Boolean boolPref = Preferences.getBool("MediaLocation.AltLocationSetsChanged", null);
-        
+
         if (boolPref != null) {
         	saveChangedMedia = boolPref.booleanValue();
         }
-        
+
         // make sure the eaf path is treated the same way as media files,
         // i.e. it starts with file:/// or file://
         String fullEAFURL = FileUtility.pathToURLString(transcription.getFullPath());
@@ -660,7 +668,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 
             for (int i = 0; i < mediaDescriptors.size(); i++) {
                 MediaDescriptor md = mediaDescriptors.get(i);
-                
+
                 if (FileUtility.isRemoteFile(md.mediaURL)) {
                 	continue;
                 }
@@ -671,7 +679,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                 if (colonPos > 0) {
                 	    String urlhead = md.mediaURL.substring(0,colonPos);
                 	    if ( urlhead.trim().equalsIgnoreCase("rtsp")) {
-                		   continue; 
+                		   continue;
                 	    }
                  }
                  */
@@ -691,7 +699,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                         // adjust urls, check the user setting whether this should set the changed flag
                         adjustMediaDescriptors(mediaDescriptors, i,
                             file.getAbsolutePath());
-                        LOG.info("Updated file location from: \"" + fileName + 
+                        LOG.info("Updated file location from: \"" + fileName +
                         		"\" to: \"" + file.getAbsolutePath() + "\", in same directory as transcription file");
                         if (saveChangedMedia) {
                         	transcription.setChanged();
@@ -699,7 +707,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 
                         continue;
                     }
-                    
+
                     // look in the relative path stored in the media descriptor
                     if (md.relativeMediaURL != null) {
                     	String relUrl = md.relativeMediaURL;
@@ -713,7 +721,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                     		if (file.exists()) {
                                 adjustMediaDescriptors(mediaDescriptors, i,
                                     file.getAbsolutePath());
-                                LOG.info("Updated file location from: \"" + fileName + 
+                                LOG.info("Updated file location from: \"" + fileName +
                                 		"\" to: \"" + file.getAbsolutePath() + "\", by resolving relative path");
                                 if (saveChangedMedia) {
                                 	transcription.setChanged();
@@ -722,7 +730,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                     		}
                     	}
                     }
-                    
+
                     // look in a relative path ../Media
                     file = new File(eafFolderPath + "/../Media/" + localFileName);
 
@@ -730,7 +738,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                         // adjust urls
                         adjustMediaDescriptors(mediaDescriptors, i,
                             file.getAbsolutePath());
-                        LOG.info("Updated file location from: \"" + fileName + 
+                        LOG.info("Updated file location from: \"" + fileName +
                         		"\" to: \"" + file.getAbsolutePath() + "\", in Media subdirectory");
                         if (saveChangedMedia) {
                         	transcription.setChanged();
@@ -746,7 +754,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                         // adjust urls
                         adjustMediaDescriptors(mediaDescriptors, i,
                             file.getAbsolutePath());
-                        LOG.info("Updated file location from: \"" + fileName + 
+                        LOG.info("Updated file location from: \"" + fileName +
                         		"\" to: \"" + file.getAbsolutePath() + "\", in media subdirectory");
                         if (saveChangedMedia) {
                         	transcription.setChanged();
@@ -755,15 +763,15 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                     }
                     // Dec 2008 check a user definable preferred location
                     String stringPref = Preferences.getString("DefaultMediaLocation", null);
-                    
+
                     if (stringPref != null) {
                     	file = new File(FileUtility.urlToAbsPath(stringPref) + "/" + localFileName);
-                    	
+
                         if (file.exists()) {
                             // adjust urls
                             adjustMediaDescriptors(mediaDescriptors, i,
                                 file.getAbsolutePath());
-                            LOG.info("Updated file location from: \"" + fileName + 
+                            LOG.info("Updated file location from: \"" + fileName +
                             		"\" to: \"" + file.getAbsolutePath() + "\", in preferred media location");
                             if (saveChangedMedia) {
                             	transcription.setChanged();
@@ -774,15 +782,15 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                     }
                     // check last used media location
                     String lastUsedDir = Preferences.getString("MediaDir", null);
-                    
+
                     if (lastUsedDir != null) {
                     	file = new File(lastUsedDir + "/" + localFileName);
-                    	
+
                         if (file.exists()) {
                             // adjust urls
                             adjustMediaDescriptors(mediaDescriptors, i,
                                 file.getAbsolutePath());
-                            LOG.info("Updated file location from: \"" + fileName + 
+                            LOG.info("Updated file location from: \"" + fileName +
                             		"\" to: \"" + file.getAbsolutePath() + "\", in last used media location");
                             if (saveChangedMedia) {
                             	transcription.setChanged();
@@ -799,14 +807,14 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                         	String relUrl = md.relativeMediaURL;
                         	if (relUrl.startsWith("file:/")) {
                         		relUrl = relUrl.substring(6);
-                        	}                      	
+                        	}
                         	// resolve relative url and check location
                         	String absPath = FileUtility.getAbsolutePath(fullEAFURL, relUrl);
                         	if (FileUtility.remoteFileExists(absPath)) {
                                 // adjust urls
                                 adjustMediaDescriptors(mediaDescriptors, i,
                                     absPath);
-                                LOG.info("Updated file location from: \"" + fileName + 
+                                LOG.info("Updated file location from: \"" + fileName +
                                 		"\" to: \"" + absPath + "\", in last used media location");
                                 if (saveChangedMedia) {
                                 	transcription.setChanged();
@@ -822,7 +830,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                             // adjust urls
                             adjustMediaDescriptors(mediaDescriptors, i,
                             		mediaUrl);
-                            LOG.info("Updated file location from: \"" + fileName + 
+                            LOG.info("Updated file location from: \"" + fileName +
                             		"\" to: \"" + mediaUrl + "\", in last used media location");
                             if (saveChangedMedia) {
                             	transcription.setChanged();
@@ -836,14 +844,14 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                     ArrayList<String[]> extensions = new ArrayList<String[]>();
                     String[] mainExt;
 
-                    if (md.mimeType.equals(MediaDescriptor.WAV_MIME_TYPE)) {                    	
+                    if (md.mimeType.equals(MediaDescriptor.WAV_MIME_TYPE)) {
                     	mainExt = FileExtension.WAV_EXT;
                     } else if (md.mimeType.equals(MediaDescriptor.MPG_MIME_TYPE)) {
-                    	mainExt = FileExtension.MPEG_EXT;                    	
+                    	mainExt = FileExtension.MPEG_EXT;
                     } else if (md.mimeType.equals(MediaDescriptor.MP4_MIME_TYPE)) {
-                    	mainExt = FileExtension.MPEG4_EXT;                    	
+                    	mainExt = FileExtension.MPEG4_EXT;
                     } else if (md.mimeType.equals(MediaDescriptor.QUICKTIME_MIME_TYPE)) {
-                    	mainExt = FileExtension.QT_EXT;                    	
+                    	mainExt = FileExtension.QT_EXT;
                     } else {
                     	extensions.add(FileExtension.MEDIA_EXT);
                     	extensions.add(FileExtension.MPEG_EXT);
@@ -851,16 +859,16 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                     	extensions.add(FileExtension.MPEG4_EXT);
                     	extensions.add(FileExtension.QT_EXT);
                 		mainExt = null;
-                    }                   
-                    
+                    }
+
                     // Keep asking for a file until ok
                     for (;;) {
 	                    // set directory to last used media file or to the location of the eaf
 	                    chooser.createAndShowFileDialog(
 	                    		ElanLocale.getString("Frame.ElanFrame.LocateMedia") + ": " + localFileName,
-	                    		FileChooser.OPEN_DIALOG, null, 
+	                    		FileChooser.OPEN_DIALOG, null,
 	                    		extensions, mainExt, true, "MediaDir", FileChooser.FILES_ONLY, file.getName());
-	
+
 	                    if (chooser.getSelectedFile() == null) {
 	                    	// the user did choose cancel and thereby gave up locating the file
 	                    	md.isValid = false;
@@ -868,7 +876,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 	                    	break;
 	                    }
                     	String absolutePath = chooser.getSelectedFile().getAbsolutePath();
-                    	
+
                     	if (linkingTheSameMediaTwice(mediaDescriptors, absolutePath)) {
                     		continue;	// ask again
                     	}
@@ -884,9 +892,9 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                 		transcription.setChanged();
                 		//}
                 		break;
-                	}             	   
+                	}
                 }
-            }            
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -895,7 +903,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     }
 
    /**
-    * Check if the replacement media happens to be linked already. 
+    * Check if the replacement media happens to be linked already.
     * @param mediaDescriptors of the existing media
     * @param absolutePath of the new media
     * @return true if already linked.
@@ -932,15 +940,15 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 				return false;
 			}
     	}
-    	
+
     	String e1 = FileUtility.getExtension(fn1, "");
     	String e2 = FileUtility.getExtension(fn2, "");
-    	
+
     	if (!e1.equals(e2)) {
     		String fmt = ElanLocale.getString("Frame.ElanFrame.FileExtensionsDiffer");
     		String text = String.format(fmt, e1, e2);
     		boolean ok = showConfirmDialog(text);
-  
+
     	    return ok;
     	}
 
@@ -954,7 +962,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
      *
      * @return true if the user's answer is affirmative, false otherwise
      */
-    private boolean showConfirmDialog(String question) {        
+    private boolean showConfirmDialog(String question) {
         int answer = JOptionPane.showConfirmDialog(this,
         		question,
                 ElanLocale.getString(
@@ -1005,19 +1013,19 @@ public class ElanFrame2 extends JFrame implements ActionListener,
      * be getters for these viewers who needs to know about them?
      */
     protected void initElan() {
-    	if(MonitoringLogger.isInitiated()){            	
-        	MonitoringLogger.getLogger(null).log(MonitoringLogger.OPEN_FILE, transcriptionForThisFrame.getName());	
+    	if(MonitoringLogger.isInitiated()){
+        	MonitoringLogger.getLogger(null).log(MonitoringLogger.OPEN_FILE, transcriptionForThisFrame.getName());
         	MonitoringLogger.getLogger(transcriptionForThisFrame).log(MonitoringLogger.OPEN_FILE);
         }
-    	
+
         setTitle("Initializing....");
         // before creating viewers apply preferences to controlled vocabularies
-        loadCVPreferences();   
-       
-        viewerManager = new ViewerManager2((TranscriptionImpl)transcriptionForThisFrame);  
-        layoutManager = new ElanLayoutManager(this, viewerManager);        
-        ELANCommandFactory.addDocument(this, viewerManager, layoutManager); 
-        
+        loadCVPreferences();
+
+        viewerManager = new ViewerManager2((TranscriptionImpl)transcriptionForThisFrame);
+        layoutManager = new ElanLayoutManager(this, viewerManager);
+        ELANCommandFactory.addDocument(this, viewerManager, layoutManager);
+
         pvMenuManager = new PlayerViewerMenuManager(this, transcriptionForThisFrame);
         //long time = System.currentTimeMillis();
         //System.out.println("B: " + 0);
@@ -1025,22 +1033,22 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         //    transcriptionForThisFrame.getMediaDescriptors());
         MediaDescriptorUtil.createMediaPlayers((TranscriptionImpl) transcriptionForThisFrame,
         		pvMenuManager.getStoredVisiblePlayers());
-        
+
         wfvMenuManager = new WaveFormViewerMenuManager(this, transcriptionForThisFrame);
 
-        // if there is a signal viewer its mediafile is the first in the list       
-        ArrayList<String> audioPaths = new ArrayList<String>(4);   
+        // if there is a signal viewer its mediafile is the first in the list
+        ArrayList<String> audioPaths = new ArrayList<String>(4);
        	if (layoutManager.getSignalViewer() != null) {
        		audioPaths.add(layoutManager.getSignalViewer().getMediaPath());
-       	}        	
-      
+       	}
+
         if(!menuItemSignalViewer.isSelected()){
         	if (layoutManager.getSignalViewer() != null) {
-        		layoutManager.remove(layoutManager.getSignalViewer());        		
-        	} 
+        		layoutManager.remove(layoutManager.getSignalViewer());
+        	}
         	menuWaveform.setEnabled(false);
         }
-        
+
         ArrayList<String> videoPaths = new ArrayList<String>(6);
         // there may be other video files associated with the transcription
 
@@ -1058,50 +1066,50 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         		}
 			}
         }
-        
-        viewerManager.setAudioPaths(audioPaths); 
-        viewerManager.setVideoPaths(videoPaths);    	
-    	
+
+        viewerManager.setAudioPaths(audioPaths);
+        viewerManager.setVideoPaths(videoPaths);
+
         // initLinkedFiles now also updates the otherMediaPaths of the ViewerManager
-        if (transcriptionForThisFrame.getLinkedFileDescriptors().size() > 0) {      
+        if (transcriptionForThisFrame.getLinkedFileDescriptors().size() > 0) {
         	LinkedFileDescriptorUtil.initLinkedFiles(
         		(	TranscriptionImpl) transcriptionForThisFrame);
         }
 
         ElanLocale.addElanLocaleListener(transcriptionForThisFrame, this);
-        
+
         setFrameTitle();
-        
+
         initMenusAndCommands();
-        
+
         pvMenuManager.initPlayerMenu();
         wfvMenuManager.initWaveFormViewerMenu();
 
         if (viewerManager.getMasterMediaPlayer().isFrameRateAutoDetected()) {
             // disable the menu to change the video standard, i.e. the frame length
             setMenuEnabled(FrameConstants.FRAME_LENGTH, false);
-        }       
-        
+        }
+
 		int mode = ElanLayoutManager.NORMAL_MODE;
-		Integer lastMode = Preferences.getInt("LayoutManager.CurrentMode", viewerManager.getTranscription()); 
+		Integer lastMode = Preferences.getInt("LayoutManager.CurrentMode", viewerManager.getTranscription());
 		if(lastMode != null && mode != lastMode.intValue()){
 			// try to switch to the lastMode
-			layoutManager.changeMode(lastMode);	
+			layoutManager.changeMode(lastMode);
 			if(lastMode == layoutManager.getMode()){
 				// update the changes in the menu, if the mode is switched to the new one
 				setMenuSelected(layoutManager.getModeConstant(lastMode), FrameConstants.OPTION);
 				mode = lastMode;
 			}
-		} 	
-		
+		}
+
 		if(mode == ElanLayoutManager.NORMAL_MODE){
 			layoutManager.changeMode(mode);
-		}		
-				
+		}
+
 		Preferences.addPreferencesListener(transcriptionForThisFrame, layoutManager);
 	    Preferences.addPreferencesListener(transcriptionForThisFrame, this);
 	    Preferences.notifyListeners(transcriptionForThisFrame);
-		
+
         // a few prefs to load only on load
         loadPreferences();
 
@@ -1142,7 +1150,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     			MonitoringLogger.startMonitoring(true);
     		}
     	}
-    	
+
     	//getRootPane().putClientProperty("Window.alpha", Float.valueOf(0.50));// on MacOS a window can be (semi) transparent
         Locale savedLocale = (Locale) Preferences.get("Locale", null);
 
@@ -1164,7 +1172,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         // add this elanframe to locale listener
         //ElanLocale.addElanLocaleListener(this);
         pack();
-        
+
         updateShortcutMap(null);
 
         /*
@@ -1175,7 +1183,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
          */
         // HS 2012 re/store dimension per transcription
         Dimension d = Preferences.getDimension("FrameSize", transcriptionForThisFrame);
-        
+
         if (d == null) {
         	d = Preferences.getDimension("FrameSize", null);
         }
@@ -1199,8 +1207,8 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         // HS June 2010 correct dimension and location if they don't fit on the screen?
         // or make this a user preference?
         Rectangle wRect = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
-        
-        if (d != null) {      	
+
+        if (d != null) {
         	if (d.width > wRect.width) {
         		d.setSize(wRect.width, d.height);
         	}
@@ -1212,13 +1220,13 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         	setSize(800, 600);
         }
         Point p = Preferences.getPoint("FrameLocation", transcriptionForThisFrame);
-        
+
         if (p == null) {
         	p = Preferences.getPoint("FrameLocation", null);
         }
 
         if (p != null) {
-        	// HS 08-2012 only adjust the location if the upper left corner is outside of the 
+        	// HS 08-2012 only adjust the location if the upper left corner is outside of the
         	// screen or within some screen inset
         	if (p.x < wRect.x) {
         		p.x = wRect.x;
@@ -1240,24 +1248,24 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 //        	}
             setLocation(p);
         } else {
-        	setLocation((int) ((wRect.getWidth() / 2) - (getWidth() / 2)), 
+        	setLocation((int) ((wRect.getWidth() / 2) - (getWidth() / 2)),
         			(int) ((wRect.getHeight() / 2) - (getHeight() / 2)));
         }
-        // the call to setVisible should be moved to (a new thread created in) 
+        // the call to setVisible should be moved to (a new thread created in)
         // the class that called a constructor....
         setVisible(true);
     }
-    
+
     /**
      * Enables creation of new transcriptions and opening of existing transcriptions by
      * means of drag and drop of files onto the window.
      */
     protected void createDnDTarget() {
     	DropTarget dropTarget = new DropTarget(this.getContentPane(), new ELANDropTargetListener());
-    	// the above works as it is but maybe the target could/should be configured appropriately 
+    	// the above works as it is but maybe the target could/should be configured appropriately
     	dropTarget.setDefaultActions(DnDConstants.ACTION_REFERENCE);
     }
-    
+
     protected void initMenuBar() {
         menuBar = new JMenuBar();
 
@@ -1282,7 +1290,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         menuActions.put(ELANCommandFactory.OPEN_DOC,ma);
         menuItemFileOpen = new JMenuItem(ma);
         menuFile.add(menuItemFileOpen);
-        
+
         ma = new OpenRemoteMA(ELANCommandFactory.OPEN_REMOTE_DOC, this);
         menuActions.put(ELANCommandFactory.OPEN_REMOTE_DOC, ma);
         menuFile.add(new JMenuItem(ma));
@@ -1291,50 +1299,50 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         menuActions.put("Menu.File.OpenRecent",ma);
         menuRecentFiles = new JMenu(ma);
         menuFile.add(menuRecentFiles);
-        
+
         ma = new MenuAction(ELANCommandFactory.CLOSE);
         closeMI = new ElanMenuItem(ma, false);
         menuActions.put(ELANCommandFactory.CLOSE, ma);
         menuFile.add(closeMI);
 		menuFile.addSeparator();
-       
+
 		ma = new MenuAction(ELANCommandFactory.SAVE);
 		saveMI = new ElanMenuItem(ma, false);
 		menuActions.put(ELANCommandFactory.SAVE, ma);
 		menuFile.add(saveMI);
-		
+
 		ma = new MenuAction(ELANCommandFactory.SAVE_AS);
 		saveAsMI = new ElanMenuItem(ma, false);
 		menuActions.put(ELANCommandFactory.SAVE_AS, ma);
 		menuFile.add(saveAsMI);
-        
+
 		ma = new MenuAction(ELANCommandFactory.SAVE_AS_TEMPLATE);
         saveAsTemplateMI = new ElanMenuItem(ma, false);
         menuActions.put(ELANCommandFactory.SAVE_AS_TEMPLATE, ma);
         menuFile.add(saveAsTemplateMI);
-		
+
         ma = new MenuAction(ELANCommandFactory.SAVE_SELECTION_AS_EAF);
 		saveSelEafMI = new ElanMenuItem(ma, false);
 		menuActions.put(ELANCommandFactory.SAVE_SELECTION_AS_EAF, ma);
         menuFile.add(saveSelEafMI);
-        
+
         ma = new MenuAction(ELANCommandFactory.EXPORT_EAF_2_7);
 		saveAs2_7MI = new ElanMenuItem(ma, false);
 		menuActions.put(ELANCommandFactory.EXPORT_EAF_2_7, ma);
         menuFile.add(saveAs2_7MI);
 
         menuFile.addSeparator();
-        
+
         ma = new ValidateEAFMA(ELANCommandFactory.VALIDATE_DOC, this);
         menuActions.put(ELANCommandFactory.VALIDATE_DOC, ma);
         JMenuItem menuItemValidateFile = new JMenuItem(ma);
         menuFile.add(menuItemValidateFile);
-        
+
         ma = new MergeTranscriptionsMA(ELANCommandFactory.MERGE_TRANSCRIPTIONS, this);
         menuActions.put(ELANCommandFactory.MERGE_TRANSCRIPTIONS,ma);
         mergeTransMI = new ElanMenuItem(ma);
 		menuFile.add(mergeTransMI);
-		
+
         ma = new MenuAction("Menu.File.Backup.Auto");
         menuActions.put("Menu.File.Backup.Auto",ma);
         menuBackup = new JMenu(ma);
@@ -1355,7 +1363,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 		menuActions.put(ELANCommandFactory.PRINT, ma);
 		menuFile.add(printMI);
 		menuFile.addSeparator();
-		
+
 		ma = new MenuAction("Menu.File.ProcessMulti");
 		menuActions.put("Menu.File.ProcessMulti",ma);
 		JMenu mfProcessMenu = new JMenu(ma);
@@ -1364,112 +1372,112 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 		ma = new MultiEAFCreationMA(ELANCommandFactory.CREATE_NEW_MULTI, this);
 		menuActions.put(ELANCommandFactory.CREATE_NEW_MULTI, ma);
 		mfProcessMenu.add(new JMenuItem(ma));
-		
+
 		ma = new MultipleFilesEditMA(ELANCommandFactory.EDIT_MULTIPLE_FILES, this);
 		menuActions.put(ELANCommandFactory.EDIT_MULTIPLE_FILES, ma);
 		mfProcessMenu.add(new JMenuItem(ma));
-        
+
         ma = new MultiEAFScrubberMA(ELANCommandFactory.SCRUB_MULTIPLE_FILES, this);
         menuActions.put(ELANCommandFactory.SCRUB_MULTIPLE_FILES, ma);
         menuItemScrubTrans = new JMenuItem(ma);
         mfProcessMenu.add(menuItemScrubTrans);
-        
+
         ma = new UpdateMultiForECVMA(ELANCommandFactory.UPDATE_TRANSCRIPTIONS_FOR_ECV, this);
 		menuActions.put(ELANCommandFactory.UPDATE_TRANSCRIPTIONS_FOR_ECV, ma);
 		mfProcessMenu.add(new JMenuItem(ma));
-		
+
         ma = new MultipleFileUpdateWithTemplateMA(ELANCommandFactory.UPDATE_TRANSCRIPTIONS_WITH_TEMPLATE, this);
 		menuActions.put(ELANCommandFactory.UPDATE_TRANSCRIPTIONS_WITH_TEMPLATE, ma);
 		mfProcessMenu.add(new JMenuItem(ma));
-        
+
         ma = new ClipMediaMultiMA(ELANCommandFactory.CLIP_MEDIA_MULTI, this);
         menuActions.put(ELANCommandFactory.CLIP_MEDIA_MULTI, ma);
         mfProcessMenu.add(new JMenuItem(ma));
         mfProcessMenu.addSeparator();
-        
+
         ma = new MultiFileAnnotationsFromOverlapsMA(ELANCommandFactory.ANNOTATION_OVERLAP_MULTI, this);
         menuActions.put(ELANCommandFactory.ANNOTATION_OVERLAP_MULTI, ma);
         JMenuItem menuItemMultipleFileAnnotationsFromOverlaps = new JMenuItem(ma);
         mfProcessMenu.add(menuItemMultipleFileAnnotationsFromOverlaps);
-        
+
         ma = new MultiFileAnnotationsFromSubtractionMA(ELANCommandFactory.ANNOTATION_SUBTRACTION_MULTI, this);
         menuActions.put(ELANCommandFactory.ANNOTATION_SUBTRACTION_MULTI, ma);
        // JMenuItem menuItemMultipleFileAnnotationsFromOverlaps = new JMenuItem(ma);
         mfProcessMenu.add(new JMenuItem(ma));
-        
+
         ma = new MultipleFileMergeTiersMA(ELANCommandFactory.MERGE_TIERS_MULTI, this);
         menuActions.put(ELANCommandFactory.MERGE_TIERS_MULTI, ma);
         mfProcessMenu.add(new JMenuItem(ma));
         mfProcessMenu.addSeparator();
-        
+
         ma = new AnnotatorCompareMA(ELANCommandFactory.ANNOTATOR_COMPARE_MULTI, this);
         menuActions.put(ELANCommandFactory.ANNOTATOR_COMPARE_MULTI, ma);
         compareAnnotatorsMI = new ElanMenuItem(ma);
         mfProcessMenu.add(compareAnnotatorsMI);
-        
+
         ma = new StatisticsMultipleFilesMA(ELANCommandFactory.STATISTICS_MULTI, this);
         menuActions.put(ELANCommandFactory.STATISTICS_MULTI, ma);
         mfProcessMenu.add(new JMenuItem(ma));
-        
+
         ma = new NgramStatisticsMA(ELANCommandFactory.NGRAMSTATS_MULTI, this);
         menuActions.put(ELANCommandFactory.NGRAMSTATS_MULTI, ma);
         mfProcessMenu.add(new JMenuItem(ma));
-        
+
         ma = new MenuAction("Menu.File.AnnotationServer");
 		menuActions.put("Menu.File.AnnotationServer", ma);
 		menuAnnotationServer = new JMenu(ma);
 		menuAnnotationServer.setEnabled(false);
 		menuFile.add(menuAnnotationServer);
-		
+
 		menuFile.addSeparator();
-		
+
         ma = new MenuAction("Menu.File.Export");
         menuActions.put("Menu.File.Export", ma);
         menuExport = new JMenu(ma);
         menuExport.setEnabled(false);
         menuFile.add(menuExport);
-        
+
         ma = new MenuAction("Menu.File.Export.MultipleFiles");
         menuActions.put("Menu.File.Export.MultipleFiles", ma);
         JMenu exportMenuMulti = new JMenu(ma);
-        menuFile.add(exportMenuMulti);   
-        
+        menuFile.add(exportMenuMulti);
+
         ma = new ExportToolBoxMultiMA(ELANCommandFactory.EXPORT_TOOLBOX_MULTI, this);
         menuActions.put(ELANCommandFactory.EXPORT_TOOLBOX_MULTI, ma);
         exportMenuMulti.add(new JMenuItem(ma));
-        
+
         ma = new ExportFlexMultiMA(ELANCommandFactory.EXPORT_FLEX_MULTI, this);
         menuActions.put(ELANCommandFactory.EXPORT_FLEX_MULTI, ma);
         exportMenuMulti.add(new JMenuItem(ma));
-        
+
         ma = new ExportPraatMultiMA(ELANCommandFactory.EXPORT_PRAAT_MULTI, this);
         menuActions.put(ELANCommandFactory.EXPORT_PRAAT_MULTI, ma);
         exportMenuMulti.add(new JMenuItem(ma));
-        
+
         ma = new ExportTabMultiMA(ELANCommandFactory.EXPORT_TAB_MULTI, this);
         menuActions.put(ELANCommandFactory.EXPORT_TAB_MULTI, ma);
         exportMenuMulti.add(new JMenuItem(ma));
-        
+
         ma = new ExportAnnotationsMultiMA(ELANCommandFactory.EXPORT_ANNLIST_MULTI, this);
         menuActions.put(ELANCommandFactory.EXPORT_ANNLIST_MULTI, ma);
         exportMenuMulti.add(new JMenuItem(ma));
-        
+
         ma = new ExportWordsMultiMA(ELANCommandFactory.EXPORT_WORDLIST_MULTI, this);
         menuActions.put(ELANCommandFactory.EXPORT_WORDLIST_MULTI, ma);
         exportMenuMulti.add(new JMenuItem(ma));
-        
+
         ma = new ExportTiersMA(ELANCommandFactory.EXPORT_TIERS_MULTI, this);
         menuActions.put(ELANCommandFactory.EXPORT_TIERS_MULTI, ma);
         exportMenuMulti.add(new JMenuItem(ma));
-        
+
         ma = new ExportOverlapsMultiMA(ELANCommandFactory.EXPORT_OVERLAPS_MULTI, this);
         menuActions.put(ELANCommandFactory.EXPORT_OVERLAPS_MULTI, ma);
         exportMenuMulti.add(new JMenuItem(ma));
-        
+
         ma = new ExportThemeMultiMA(ELANCommandFactory.EXPORT_THEME_MULTI, this);
         menuActions.put(ELANCommandFactory.EXPORT_THEME_MULTI, ma);
         exportMenuMulti.add(new JMenuItem(ma));
-        
+
         ma = new MenuAction("Menu.File.Import");
         menuActions.put("Menu.File.Import", ma);
         menuImport = new JMenu(ma);
@@ -1484,7 +1492,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         menuActions.put(ELANCommandFactory.IMPORT_FLEX, ma);
         JMenuItem flexImportMI = new JMenuItem(ma);
         menuImport.add(flexImportMI);
-        
+
         ma = new ImportCHATMA(ELANCommandFactory.IMPORT_CHAT, this);
         menuActions.put(ELANCommandFactory.IMPORT_CHAT, ma);
         menuItemCHATImport = new JMenuItem(ma);
@@ -1499,49 +1507,49 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         menuActions.put(ELANCommandFactory.IMPORT_TAB, ma);
         importDelimitedTextMI = new ElanMenuItem(ma);
         menuImport.add(importDelimitedTextMI);
-        
+
         ma = new ImportSubtitleTextMA(ELANCommandFactory.IMPORT_SUBTITLE, this);
         menuActions.put(ELANCommandFactory.IMPORT_SUBTITLE, ma);
         importSubtitleTextMI = new ElanMenuItem(ma);
         menuImport.add(importSubtitleTextMI);
-        
+
         ma = new ImportPraatMA(ELANCommandFactory.IMPORT_PRAAT_GRID, this);
         importPraatMI = new ElanMenuItem(ma);
         menuActions.put(ELANCommandFactory.IMPORT_PRAAT_GRID, ma);
         menuImport.add(importPraatMI);
-        
+
         ma = new ImportJSONMA(ELANCommandFactory.IMPORT_JSON_WA, this);
         menuActions.put(ELANCommandFactory.IMPORT_JSON_WA, ma);
         menuImport.add(new ElanMenuItem(ma));
-        
+
         ma = new ImportRecognizerTiersMA(ELANCommandFactory.IMPORT_RECOG_TIERS, this);
         importRecogTiersMI = new ElanMenuItem(ma);
         menuActions.put(ELANCommandFactory.IMPORT_RECOG_TIERS, ma);
 		menuImport.add(importRecogTiersMI);
-		
-        
+
+
         ma = new ImportShoeboxMA(ELANCommandFactory.IMPORT_SHOEBOX, this);
         menuActions.put(ELANCommandFactory.IMPORT_SHOEBOX, ma);
         menuItemShoeboxImport = new JMenuItem(ma);
         menuImport.add(menuItemShoeboxImport);
-        
+
         ma = new MenuAction("Menu.File.Import.MultipleFiles");
         menuActions.put("Menu.File.Import.MultipleFiles", ma);
         JMenu importMenuMulti = new JMenu(ma);
-        menuFile.add(importMenuMulti); 
-        
+        menuFile.add(importMenuMulti);
+
         ma = new ImportToolboxMultiMA(ELANCommandFactory.IMPORT_TOOLBOX_MULTI, this);
         menuActions.put(ELANCommandFactory.IMPORT_TOOLBOX_MULTI, ma);
-        importMenuMulti.add(new JMenuItem(ma));      
-        
+        importMenuMulti.add(new JMenuItem(ma));
+
         ma = new ImportPraatMultiMA(ELANCommandFactory.IMPORT_PRAAT_GRID_MULTI, this);
         menuActions.put(ELANCommandFactory.IMPORT_PRAAT_GRID_MULTI, ma);
-        importMenuMulti.add(new JMenuItem(ma));      
-        
+        importMenuMulti.add(new JMenuItem(ma));
+
         ma = new ImportFlexMultiMA(ELANCommandFactory.IMPORT_FLEX_MULTI, this);
         menuActions.put(ELANCommandFactory.IMPORT_FLEX_MULTI, ma);
-        importMenuMulti.add(new JMenuItem(ma));      
-        
+        importMenuMulti.add(new JMenuItem(ma));
+
         menuFile.addSeparator();
 
         ma = new ExitMA(ELANCommandFactory.EXIT);
@@ -1552,8 +1560,8 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         ma = new MenuAction("Menu.Edit");
         menuActions.put("Menu.Edit", ma);
         menuEdit = new JMenu(ma);
-        menuBar.add(menuEdit); 
- 
+        menuBar.add(menuEdit);
+
         ma = new MenuAction(ELANCommandFactory.UNDO);
         undoMI = new ElanMenuItem(ma, false);
         menuActions.put(ELANCommandFactory.UNDO, ma);
@@ -1570,26 +1578,26 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         ma = new MenuAction(ELANCommandFactory.EDIT_CV_DLG);
         editCVMI = new ElanMenuItem(ma, false);
         menuActions.put(ELANCommandFactory.EDIT_CV_DLG, ma);
-		menuEdit.add(editCVMI);	
-		
+		menuEdit.add(editCVMI);
+
 		ma = new MenuAction(ELANCommandFactory.SET_AUTHOR);
 		setAuthorMI = new ElanMenuItem(ma, false);
 		menuActions.put(ELANCommandFactory.SET_AUTHOR, ma);
 		menuEdit.add(setAuthorMI);
-		
+
 		ma = new MenuAction(ELANCommandFactory.SET_DOCUMENT_PROPERTIES);
 		setDocumentPropertiesMI = new ElanMenuItem(ma, false);
 		menuActions.put(ELANCommandFactory.SET_DOCUMENT_PROPERTIES, ma);
 		menuEdit.add(setDocumentPropertiesMI);
-		
+
 		menuEdit.addSeparator();
 		ma = new MenuAction(ELANCommandFactory.LINKED_FILES_DLG);
 		linkedFilesMI = new ElanMenuItem(ma, false);
 		menuActions.put(ELANCommandFactory.LINKED_FILES_DLG, ma);
 		menuEdit.add(linkedFilesMI);
         menuEdit.addSeparator();
-        
-		// For opening a Edit Lexicon Service Dialog: 
+
+		// For opening a Edit Lexicon Service Dialog:
 		ma = new MenuAction(ELANCommandFactory.EDIT_LEX_SRVC_DLG);
 		editLexiconServiceMI = new ElanMenuItem(ma, false);
 		menuActions.put(ELANCommandFactory.EDIT_LEX_SRVC_DLG, ma);
@@ -1599,25 +1607,25 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         editLangListMI = new ElanMenuItem(ma, true);
         menuActions.put(ELANCommandFactory.EDIT_LANGUAGES_LIST, ma);
         menuEdit.add(editLangListMI);
-        
+
         ma = new EditTierSetMA(ELANCommandFactory.EDIT_TIER_SET, this);
         editTierSetMI = new ElanMenuItem(ma, true);
         menuActions.put(ELANCommandFactory.EDIT_TIER_SET, ma);
-        menuEdit.add(editTierSetMI);	
+        menuEdit.add(editTierSetMI);
 		ma = new EditSpellCheckerMA(ELANCommandFactory.EDIT_SPELL_CHECKER_DLG, this);
 		menuActions.put(ELANCommandFactory.EDIT_SPELL_CHECKER_DLG, ma);
 		menuEdit.add(new JMenuItem(ma));
 		menuEdit.addSeparator();
-		
+
         ma = new MenuAction("Menu.Edit.Preferences");
         menuActions.put("Menu.Edit.Preferences", ma);
         menuPreferences = new JMenu(ma);
         menuEdit.add(menuPreferences);
-        
+
         ma = new EditPreferencesMA(ELANCommandFactory.EDIT_PREFS, this);
         menuActions.put(ELANCommandFactory.EDIT_PREFS, ma);
         menuPreferences.add(new JMenuItem(ma));
-       
+
         ma = new EditShortcutsMA("Menu.Edit.Preferences.Shortcut", this);
         menuActions.put("Menu.Edit.Preferences.Shortcut", ma);
         menuPreferences.add(new JMenuItem(ma));
@@ -1637,25 +1645,25 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         menuBar.add(menuAnnotation);
         // problems on macOS, enabling later doesn't work reliably
         menuAnnotation.setEnabled(SystemReporting.isMacOS());
-        
+
         ma = new MenuAction("Menu.Tier");
         menuActions.put("Menu.Tier", ma);
         menuTier = new JMenu(ma);
         menuBar.add(menuTier);
         menuTier.setEnabled(SystemReporting.isMacOS());
-        
+
         ma = new MenuAction("Menu.Type");
         menuActions.put("Menu.Type", ma);
         menuType = new JMenu(ma);
         menuBar.add(menuType);
         menuType.setEnabled(SystemReporting.isMacOS());
-        
+
         ma = new MenuAction("Menu.Search");
         menuActions.put("Menu.Search", ma);
         menuSearch = new JMenu(ma);
         menuBar.add(menuSearch);
-        //menuSearch.setEnabled(false);
-        
+        menuSearch.setEnabled(false);
+
         ma = new MenuAction(ELANCommandFactory.SEARCH_DLG);
         searchMI = new ElanMenuItem(ma, false);
         menuActions.put(ELANCommandFactory.SEARCH_DLG, ma);
@@ -1663,139 +1671,139 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 		ma = new MultiFindReplaceMA(ELANCommandFactory.REPLACE_MULTIPLE, this);
 		menuActions.put(ELANCommandFactory.REPLACE_MULTIPLE, ma);
 		menuSearch.add(ma);
-		
+
 		ma = new SearchMultipleMA(ELANCommandFactory.SEARCH_MULTIPLE_DLG, this);
 		menuActions.put(ELANCommandFactory.SEARCH_MULTIPLE_DLG, ma);
 		menuSearch.add(ma);
-		
+
 		ma = new FASTSearchMA(ELANCommandFactory.FASTSEARCH_DLG, this);
 		menuActions.put(ELANCommandFactory.FASTSEARCH_DLG, ma);
 		menuSearch.add(ma);
-		
+
 		ma = new StructuredSearchMultipleMA(ELANCommandFactory.STRUCTURED_SEARCH_MULTIPLE_DLG, this);
 		menuActions.put(ELANCommandFactory.STRUCTURED_SEARCH_MULTIPLE_DLG, ma);
 		menuSearch.add(ma);
-		
+
 		ma = new MenuAction(ELANCommandFactory.GOTO_DLG);
 		goToMI = new ElanMenuItem(ma, false);
 		menuActions.put(ELANCommandFactory.GOTO_DLG, ma);
 		menuSearch.add(goToMI);
-	
+
         ma = new MenuAction("Menu.View");
         menuActions.put("Menu.View", ma);
         menuView = new JMenu(ma);
         menuBar.add(menuView);
 
         ma = new MenuAction(ELANCommandFactory.MEDIA_PLAYERS);
-        menuActions.put(ELANCommandFactory.MEDIA_PLAYERS, ma);        
+        menuActions.put(ELANCommandFactory.MEDIA_PLAYERS, ma);
         menuMediaPlayer = new JMenu(ma);
         menuView.add(menuMediaPlayer);
-        
+
         ma = new MenuAction(ELANCommandFactory.WAVEFORMS);
         menuActions.put(ELANCommandFactory.WAVEFORMS, ma);
         menuWaveform = new JMenu(ma);
         waveFormGroup = new ButtonGroup();
         menuView.add(menuWaveform);
-        
+
         ma = new MenuAction(ELANCommandFactory.VIEWERS);
         menuActions.put(ELANCommandFactory.VIEWERS, ma);
         menuViewer = new JMenu(ma);
         menuView.add(menuViewer);
         menuView.addSeparator();
-        
-        menuItemGridViewer = new JCheckBoxMenuItem(new CreateViewerMA(ELANCommandFactory.GRID_VIEWER,this));      
-        menuItemGridViewer.setSelected(true);  
-        menuViewer.add(menuItemGridViewer);   
-        
-        
-        menuItemTextViewer = new JCheckBoxMenuItem(new CreateViewerMA(ELANCommandFactory.TEXT_VIEWER,this));      
+
+        menuItemGridViewer = new JCheckBoxMenuItem(new CreateViewerMA(ELANCommandFactory.GRID_VIEWER,this));
+        menuItemGridViewer.setSelected(true);
+        menuViewer.add(menuItemGridViewer);
+
+
+        menuItemTextViewer = new JCheckBoxMenuItem(new CreateViewerMA(ELANCommandFactory.TEXT_VIEWER,this));
         menuItemTextViewer.setSelected(true);
-        menuViewer.add(menuItemTextViewer);   
-        
-        menuItemSubtitleViewer = new JCheckBoxMenuItem(new CreateViewerMA(ELANCommandFactory.SUBTITLE_VIEWER,this));      
+        menuViewer.add(menuItemTextViewer);
+
+        menuItemSubtitleViewer = new JCheckBoxMenuItem(new CreateViewerMA(ELANCommandFactory.SUBTITLE_VIEWER,this));
         menuItemSubtitleViewer.setSelected(true);
-        menuViewer.add(menuItemSubtitleViewer);   
-        
-        menuItemLexiconViewer = new JCheckBoxMenuItem(new CreateViewerMA(ELANCommandFactory.LEXICON_VIEWER,this));      
-        menuItemLexiconViewer.setSelected(true); 
+        menuViewer.add(menuItemSubtitleViewer);
+
+        menuItemLexiconViewer = new JCheckBoxMenuItem(new CreateViewerMA(ELANCommandFactory.LEXICON_VIEWER,this));
+        menuItemLexiconViewer.setSelected(true);
         menuViewer.add(menuItemLexiconViewer);
-        
-        menuItemCommentViewer = new JCheckBoxMenuItem(new CreateViewerMA(ELANCommandFactory.COMMENT_VIEWER,this));      
-        menuItemCommentViewer.setSelected(true); 
+
+        menuItemCommentViewer = new JCheckBoxMenuItem(new CreateViewerMA(ELANCommandFactory.COMMENT_VIEWER,this));
+        menuItemCommentViewer.setSelected(true);
         menuViewer.add(menuItemCommentViewer);
-        
-        menuItemRecognizer = new JCheckBoxMenuItem(new CreateViewerMA(ELANCommandFactory.RECOGNIZER,this));  
-        menuItemRecognizer.setSelected(true); 
-        menuViewer.add(menuItemRecognizer);   
-        
-        menuItemMetaDataViewer = new JCheckBoxMenuItem(new CreateViewerMA(ELANCommandFactory.METADATA_VIEWER,this));      
+
+        menuItemRecognizer = new JCheckBoxMenuItem(new CreateViewerMA(ELANCommandFactory.RECOGNIZER,this));
+        menuItemRecognizer.setSelected(true);
+        menuViewer.add(menuItemRecognizer);
+
+        menuItemMetaDataViewer = new JCheckBoxMenuItem(new CreateViewerMA(ELANCommandFactory.METADATA_VIEWER,this));
         menuItemMetaDataViewer.setSelected(true);
-        menuViewer.add(menuItemMetaDataViewer); 
-        
-        menuItemSignalViewer = new JCheckBoxMenuItem(new CreateSignalViewerMA(ELANCommandFactory.SIGNAL_VIEWER,this));      
-        menuItemSignalViewer.setSelected(true);        
+        menuViewer.add(menuItemMetaDataViewer);
+
+        menuItemSignalViewer = new JCheckBoxMenuItem(new CreateSignalViewerMA(ELANCommandFactory.SIGNAL_VIEWER,this));
+        menuItemSignalViewer.setSelected(true);
         menuViewer.add(menuItemSignalViewer);
-        
-        menuItemSpectrogramViewer = new JCheckBoxMenuItem(new CreateViewerMA(ELANCommandFactory.SPECTROGRAM_VIEWER,this));      
-        menuItemSpectrogramViewer.setSelected(true);        
+
+        menuItemSpectrogramViewer = new JCheckBoxMenuItem(new CreateViewerMA(ELANCommandFactory.SPECTROGRAM_VIEWER,this));
+        menuItemSpectrogramViewer.setSelected(true);
         menuViewer.add(menuItemSpectrogramViewer);
-        
-        menuItemInterLinearViewer = new JCheckBoxMenuItem(new CreateViewerMA(ELANCommandFactory.INTERLINEAR_VIEWER,this));      
-        menuItemInterLinearViewer.setSelected(true);          
-        menuViewer.add(menuItemInterLinearViewer); 
-        
-        menuItemTimeSeriesViewer = new JCheckBoxMenuItem(new CreateViewerMA(ELANCommandFactory.TIMESERIES_VIEWER,this));      
-        menuItemTimeSeriesViewer.setSelected(true);          
-        menuViewer.add(menuItemTimeSeriesViewer); 
-        
+
+        menuItemInterLinearViewer = new JCheckBoxMenuItem(new CreateViewerMA(ELANCommandFactory.INTERLINEAR_VIEWER,this));
+        menuItemInterLinearViewer.setSelected(true);
+        menuViewer.add(menuItemInterLinearViewer);
+
+        menuItemTimeSeriesViewer = new JCheckBoxMenuItem(new CreateViewerMA(ELANCommandFactory.TIMESERIES_VIEWER,this));
+        menuItemTimeSeriesViewer.setSelected(true);
+        menuViewer.add(menuItemTimeSeriesViewer);
+
         loadViewerPreferences();
 
         /* Added by Allan van Hulst: View > Document Info menu item */
         ma = new MenuAction(ELANCommandFactory.DOCUMENT_INFO);
         viewDocumentInfoMI = new ElanMenuItem(ma, false);
 		menuView.add(viewDocumentInfoMI);
-		
+
         ma = new MenuAction(ELANCommandFactory.TIER_DEPENDENCIES);
         tierDependenciesMI = new ElanMenuItem(ma, false);
         menuActions.put(ELANCommandFactory.TIER_DEPENDENCIES, ma);
 		menuView.add(tierDependenciesMI);
-		
+
 		// replace by transcription independent actions
 		ma = new ShortcutsMA(ELANCommandFactory.SHORTCUTS, this);
 		menuActions.put(ELANCommandFactory.SHORTCUTS, ma);
         menuView.add(ma);
-        
+
         ma = new FontBrowserMA(ELANCommandFactory.FONT_BROWSER, this);
         menuActions.put(ELANCommandFactory.FONT_BROWSER, ma);
         menuView.add(ma);
-        
+
         ma = new ShowLogMA("Menu.View.LogView", this);
         menuActions.put("Menu.View.LogView", ma);
         menuView.add(ma);
-        
+
         menuView.addSeparator();
         ma = new MenuAction(ELANCommandFactory.SPREADSHEET);
         spreadsheetMI = new ElanMenuItem(ma, false);
         menuActions.put(ELANCommandFactory.SPREADSHEET, ma);
         menuView.add(spreadsheetMI);
-        
+
         ma = new MenuAction(ELANCommandFactory.STATISTICS);
         statisticsMI = new ElanMenuItem(ma, false);
         menuActions.put(ELANCommandFactory.STATISTICS, ma);
         menuView.add(statisticsMI);
-        
+
 		/* Added by Allan van Hulst: View > Annotation Density Plot menu item */
 		ma = new MenuAction(ELANCommandFactory.ANNOTATION_DENSITY_PLOT);
 		viewAnnotationDensityPlotMI = new ElanMenuItem(ma, false);
 		menuView.add(viewAnnotationDensityPlotMI);
-		
+
 		// menuView.addSeparator();
 
 		/* Added by Allan van Hulst: View > Audio Spectrogram menu item */
 		ma = new MenuAction(ELANCommandFactory.AUDIO_SPECTROGRAM);
 		viewAudioSpectrogramMI = new ElanMenuItem(ma, false);
 		// menuView.add(viewAudioSpectrogramMI);
-		
+
         ma = new MenuAction("Menu.Options");
         menuActions.put("Menu.Options", ma);
         menuOptions = new JMenu(ma);
@@ -1807,7 +1815,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         menuChangeTimePropMode.setEnabled(false);
         menuOptions.add(menuChangeTimePropMode);
         menuOptions.addSeparator();
-        
+
         ma = new MenuAction(ELANCommandFactory.ANNOTATION_MODE);
         menuItemAnnoMode = new JRadioButtonMenuItem(ma);
         menuActions.put(ELANCommandFactory.ANNOTATION_MODE, ma);
@@ -1820,54 +1828,55 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         menuActions.put(ELANCommandFactory.SYNC_MODE, ma);
         menuItemSyncMode.setEnabled(false);
         menuOptions.add(menuItemSyncMode);
-        
+
         ma = new MenuAction(ELANCommandFactory.TRANSCRIPTION_MODE);
         menuItemTranscMode = new JRadioButtonMenuItem(ma);
         menuActions.put(ELANCommandFactory.TRANSCRIPTION_MODE, ma);
         menuItemTranscMode.setEnabled(false);
         menuOptions.add(menuItemTranscMode);
-        
+
         ma = new MenuAction(ELANCommandFactory.SEGMENTATION_MODE);
         menuItemSegmentMode = new JRadioButtonMenuItem(ma);
         menuActions.put(ELANCommandFactory.SEGMENTATION_MODE, ma);
         menuItemSegmentMode.setEnabled(false);
-        menuOptions.add(menuItemSegmentMode);       
-        
+        menuOptions.add(menuItemSegmentMode);
+
         ma = new MenuAction(ELANCommandFactory.INTERLINEARIZATION_MODE);
         menuItemInterLinearMode = new JRadioButtonMenuItem(ma);
         menuActions.put(ELANCommandFactory.INTERLINEARIZATION_MODE, ma);
         menuItemInterLinearMode.setEnabled(false);
         menuOptions.add(menuItemInterLinearMode);
         menuOptions.addSeparator();
-        
+
         ma = new ActivityMonitoringMA("Menu.Options.ActivityMonitoring", this);
         menuActions.put("Menu.Options.ActivityMonitoring", ma);
         menuOptions.add(new JMenuItem(ma));
         menuOptions.addSeparator();
-        
+
         ma = new MenuAction(ELANCommandFactory.WEBSERVICES_DLG);
         menuWebservices = new JMenu(ma);
         menuWebservices.setEnabled(false);
         menuOptions.add(menuWebservices);
         menuOptions.addSeparator();
-        
-//        ma = new WebServicesMA("Menu.Options.WebServices", this);
-//        menuActions.put("Menu.Options.WebServices", ma);
-//        menuOptions.add(new JMenuItem(ma));
-//        menuOptions.addSeparator();
-        
-//        menuItemPlayAround = new ElanMenuItem(ElanLocale.getString(
-//        		ELANCommandFactory.PLAY_AROUND_SELECTION_DLG), false);
-//        menuOptions.add(menuItemPlayAround);
+
+        // ma = new WebServicesMA("Menu.Options.WebServices", this);
+        // menuActions.put("Menu.Options.WebServices", ma);
+        // menuOptions.add(new JMenuItem(ma));
+        // menuOptions.addSeparator();
+
+        menuItemPlayAround = new ElanMenuItem(ElanLocale.getString(
+                ELANCommandFactory.PLAY_AROUND_SELECTION_DLG), false);
+        menuOptions.add(menuItemPlayAround);
+
         ma = new SetPlayAroundSelectionMA(ELANCommandFactory.PLAY_AROUND_SELECTION_DLG, this);
         menuActions.put(ELANCommandFactory.PLAY_AROUND_SELECTION_DLG, ma);
         menuOptions.add(new JMenuItem(ma));
         ma = new SetPlaybackToggleMA(ELANCommandFactory.PLAYBACK_TOGGLE_DLG, this);
         menuActions.put(ELANCommandFactory.PLAYBACK_TOGGLE_DLG, ma);
         menuOptions.add(new JMenuItem(ma));
-//        menuItemRateVol = new ElanMenuItem(ElanLocale.getString(
-//                ELANCommandFactory.PLAYBACK_TOGGLE_DLG), false);
-//        menuOptions.add(menuItemRateVol);
+        menuItemRateVol = new ElanMenuItem(ElanLocale.getString(
+                ELANCommandFactory.PLAYBACK_TOGGLE_DLG), false);
+        menuOptions.add(menuItemRateVol);
 
         menuOptions.addSeparator();
         ma = new MenuAction("Menu.Options.FrameLength");
@@ -1875,7 +1884,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         menuFrameLength = new JMenu(ma);
         menuFrameLength.setEnabled(false);
         menuOptions.add(menuFrameLength);
-        
+
         menuOptions.addSeparator();
         ma = new MenuAction("Menu.Options.Language");
         menuActions.put("Menu.Options.Language", ma);
@@ -1892,62 +1901,62 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         langRBMI = new JRadioButtonMenuItem(ma);
         languageBG.add(langRBMI);
         menuAppLanguage.add(langRBMI);
-        
+
         ma = new SetLocaleMA(ELANCommandFactory.GERMAN, this, ElanLocale.GERMAN);
         langRBMI = new JRadioButtonMenuItem(ma);
         languageBG.add(langRBMI);
         menuAppLanguage.add(langRBMI);
-        
+
         ma = new SetLocaleMA(ELANCommandFactory.ENGLISH, this, ElanLocale.ENGLISH);
         langRBMI = new JRadioButtonMenuItem(ma);
         languageBG.add(langRBMI);
         menuAppLanguage.add(langRBMI);
-        
+
         ma = new SetLocaleMA(ELANCommandFactory.SPANISH, this, ElanLocale.SPANISH);
         langRBMI = new JRadioButtonMenuItem(ma);
         languageBG.add(langRBMI);
         menuAppLanguage.add(langRBMI);
-        
+
         ma = new SetLocaleMA(ELANCommandFactory.FRENCH, this, ElanLocale.FRENCH);
         langRBMI = new JRadioButtonMenuItem(ma);
         languageBG.add(langRBMI);
         menuAppLanguage.add(langRBMI);
-        
+
         ma = new SetLocaleMA(ELANCommandFactory.JAPANESE, this, ElanLocale.JAPANESE);
         langRBMI = new JRadioButtonMenuItem(ma);
         languageBG.add(langRBMI);
         menuAppLanguage.add(langRBMI);
-        
+
         ma = new SetLocaleMA(ELANCommandFactory.KOREAN, this, ElanLocale.KOREAN);
         langRBMI = new JRadioButtonMenuItem(ma);
         languageBG.add(langRBMI);
         menuAppLanguage.add(langRBMI);
-        
+
         ma = new SetLocaleMA(ELANCommandFactory.DUTCH, this, ElanLocale.DUTCH);
         langRBMI = new JRadioButtonMenuItem(ma);
         languageBG.add(langRBMI);
         menuAppLanguage.add(langRBMI);
-        
+
         ma = new SetLocaleMA(ELANCommandFactory.PORTUGUESE, this, ElanLocale.PORTUGUESE);
         langRBMI = new JRadioButtonMenuItem(ma);
         languageBG.add(langRBMI);
         menuAppLanguage.add(langRBMI);
-        
+
         ma = new SetLocaleMA(ELANCommandFactory.BRAZ_PORTUGUESE, this, ElanLocale.BRAZILIAN_PORTUGUESE);
         langRBMI = new JRadioButtonMenuItem(ma);
         languageBG.add(langRBMI);
         menuAppLanguage.add(langRBMI);
-        
+
         ma = new SetLocaleMA(ELANCommandFactory.RUSSIAN, this, ElanLocale.RUSSIAN);
         langRBMI = new JRadioButtonMenuItem(ma);
         languageBG.add(langRBMI);
         menuAppLanguage.add(langRBMI);
-        
+
         ma = new SetLocaleMA(ELANCommandFactory.SWEDISH, this, ElanLocale.SWEDISH);
         langRBMI = new JRadioButtonMenuItem(ma);
         languageBG.add(langRBMI);
         menuAppLanguage.add(langRBMI);
-        
+
         ma = new SetLocaleMA(ELANCommandFactory.CUSTOM_LANG, this, ElanLocale.CUSTOM);
         langRBMI = new JRadioButtonMenuItem(ma);
         languageBG.add(langRBMI);
@@ -1956,60 +1965,83 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         menuOptions.add(menuAppLanguage);
         recentLanguagesMenuItem = new RecentLanguagesMenuItem();
         menuOptions.add(recentLanguagesMenuItem);
-        
+
         ma = new MenuAction("Menu.Window");
         menuActions.put("Menu.Window", ma);
         menuWindow = new JMenu(ma);
         windowsGroup = new ButtonGroup();
         menuBar.add(menuWindow);
-        
+
         ma = new MenuAction("Menu.Help");
         menuActions.put("Menu.Help", ma);
         menuHelp = new JMenu(ma);
         menuBar.add(menuHelp);
-        //menuHelp.setVisible(false);
-       
+        menuHelp.setVisible(false);
+
         ma = new HelpMA(ELANCommandFactory.HELP, this);
         menuActions.put(ELANCommandFactory.HELP, ma);
         menuHelp.add(new JMenuItem(ma));
         menuHelp.addSeparator();
-        
+
         ma = new UpdateElanMA(ELANCommandFactory.UPDATE_ELAN, this);
         menuActions.put(ELANCommandFactory.UPDATE_ELAN, ma);
         menuHelp.add(new JMenuItem(ma));
-        
+
         ma = new MenuAction("Menu.Help.Website");
         menuActions.put("Menu.Help.Website", ma);
         JMenu websiteMenu = new JMenu(ma);
         menuHelp.add(websiteMenu);
-        
+
         ma = new WebMA("Menu.Help.Website.ReleaseNotes", this, Constants.ELAN_REL_NOTES_URL);
         menuActions.put("Menu.Help.Website.ReleaseNotes", ma);
         websiteMenu.add(new JMenuItem(ma));
-        
+
         ma = new WebMA("Menu.Help.Website.Download", this, Constants.ELAN_DOWNLOAD_URL);
         menuActions.put("Menu.Help.Website.Download", ma);
         websiteMenu.add(new JMenuItem(ma));
-   
+
         ma = new WebMA("Menu.Help.Website.Forum", this, Constants.ELAN_FORUM_URL);
         menuActions.put("Menu.Help.Website.Forum", ma);
         websiteMenu.add(new JMenuItem(ma));
-        
+
         websiteMenu.addSeparator();
-        
+
         ma = new WebMA("Menu.Help.Website.Subscribe", this, Constants.ELAN_SUBSCRIBE_URL);
         menuActions.put("Menu.Help.Website.Subscribe", ma);
         websiteMenu.add(new JMenuItem(ma));
-        
+
         ma = new AboutMA(ELANCommandFactory.ABOUT, this);
         menuActions.put(ELANCommandFactory.ABOUT, ma);
         menuHelp.add(new JMenuItem(ma));
-        
+
+        ma = new HelpMA(ELANCommandFactory.HELP, this);
+        menuActions.put(ELANCommandFactory.HELP, ma);
+        menuHelp.add(new JMenuItem(ma));
+
+        // Added by Katsuya Fukuoka 2022/12/20
+        ma = new MenuAction("Menu.Analysis");
+        menuActions.put("Menu.Analysis", ma);
+        menuEmpathy = new JMenu(ma);
+        menuBar.add(menuEmpathy);
+
+        ma = new DataEditorMA("Menu.DataEditor", this);
+        menuActions.put("Menu.DataEditor", ma);
+        menuEmpathy.add(new JMenuItem(ma));
+
+        ma = new RuleCreatorMA("Menu.RuleCreator", this);
+        menuActions.put("Menu.RuleCreator", ma);
+        menuEmpathy.add(new JMenuItem(ma));
+
+        ma = new InteractionInterpretationMA("Menu.InteractionInterpretation", this);
+        menuActions.put("Menu.InteractionInterpretation", ma);
+        menuEmpathy.add(new JMenuItem(ma));
+        //
+
         // temporary and therefore old fashioned menu item to allow fallback to JMF media players
         // on windows machines. As soon as native media is succesfully used in a few releases
         // this menu item can be deleted. The only action performed while toggling this item is
         // setting the PreferredMediaFramework property that is used by the player factory
-        /* use either with a -D startup option (-DPreferredMediaFramework=JMF) or add to a preference panel 
+        /* use either with a -D startup option (-DPreferredMediaFramework=JMF) or add to a preference panel
         if (System.getProperty("os.name").toLowerCase().indexOf("windows") > -1) {
             menuItemNativeMedia = new JCheckBoxMenuItem();
             menuItemNativeMedia.setText("Use Native Media Platform");
@@ -2088,26 +2120,26 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                 Boolean.valueOf(menuItemPermanentDetached.getState()), null);
         } else if (command.equals("MacNativeLF")) {
             switchMacLF();
-        }*/  
+        }*/
     }
-    
+
     public void clearShortcutsMap(String modeConstant){
 //    	if(modeConstant.equals(ELANCommandFactory.INTERLINEARIZATION_MODE)){
 //    		return;
 //    	}
-    	
+
     	if(getViewerManager() == null || getViewerManager().getTranscription() == null){
     		return;
     	}
-    	
+
     	Iterator<Entry<String, KeyStroke>> it = ShortcutsUtil.getInstance().getCurrentShortcuts(modeConstant).entrySet().iterator();
         while (it.hasNext())
         {
         	Map.Entry<String, KeyStroke> pairs = it.next();
-        	String actionName = pairs.getKey();        	
+        	String actionName = pairs.getKey();
         	Action ca = ELANCommandFactory.getCommandAction(getViewerManager().getTranscription(), actionName);
         	if(ca != null){
-        		ca.putValue(Action.ACCELERATOR_KEY, null);      
+        		ca.putValue(Action.ACCELERATOR_KEY, null);
             	String ksDescription = ShortcutsUtil.getInstance().getDescriptionForKeyStroke(pairs.getValue());
         		if(ksDescription != null && ksDescription.trim().length() > 0){
         			ca.putValue(Action.SHORT_DESCRIPTION,
@@ -2119,18 +2151,18 @@ public class ElanFrame2 extends JFrame implements ActionListener,
             		ca.putValue(Action.ACCELERATOR_KEY, null);
             	}
         	}
-        } 
+        }
     }
-    
+
     public void updateShortcutMap(String modeConstant){
     	if(modeConstant == null){
     		return;
     	}
-    	
+
     	if(getViewerManager() == null || getViewerManager().getTranscription() == null){
     		return;
     	}
-    	
+
     	// add actions with accelerator keys and without a menu item to the input
         // and action map
 //    	InputMap inputMap = menuBar.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -2138,22 +2170,22 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 //    	InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         ActionMap actionMap = getRootPane().getActionMap();
     	InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-//        ActionMap actionMap = getRootPane().getActionMap();      
+//        ActionMap actionMap = getRootPane().getActionMap();
         inputMap.clear();
         actionMap.clear();
-        
+
 //        if (inputMap instanceof ComponentInputMap && (actionMap != null)) {
         if (inputMap != null) {//useless test here
             String id = "Act-";
             String nextId;
-            
+
             int index = 0;
             Action act;
             KeyStroke ks;
             Map.Entry<String, KeyStroke> pairs ;
-            Map<String, KeyStroke> shortMap = ShortcutsUtil.getInstance().getCurrentShortcuts(modeConstant);            
+            Map<String, KeyStroke> shortMap = ShortcutsUtil.getInstance().getCurrentShortcuts(modeConstant);
             Iterator<Entry<String, KeyStroke>> it = shortMap.entrySet().iterator();
-            
+
             while (it.hasNext())
             {
             	act = null;
@@ -2164,10 +2196,10 @@ public class ElanFrame2 extends JFrame implements ActionListener,
             	if(modeConstant != null){
             		act = ELANCommandFactory.getCommandAction(getViewerManager().getTranscription(), actionName);
             	}
-            	if(act != null){        				
+            	if(act != null){
             		act.putValue(Action.ACCELERATOR_KEY, ks);
             		nextId = id + index++;
-            		if (ks != null) {           		
+            		if (ks != null) {
             			inputMap.put(ks, nextId);
             			actionMap.put(nextId, act);
             		}
@@ -2179,16 +2211,16 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                 	}
             	} else {
             		act = menuActions.get(actionName);
-                	if(act != null){                      		
+                	if(act != null){
                 		act.putValue(Action.ACCELERATOR_KEY, ks);
                 		nextId = id + index++;
                 		if (ks != null) {
                 			inputMap.put(ks, nextId);
                 			actionMap.put(nextId, act);
                 		}
-                	}else if(actionName.equals(ELANCommandFactory.UNDO)){                		
+                	}else if(actionName.equals(ELANCommandFactory.UNDO)){
                 		act = undoMI.getAction();
-                		if(act != null){        				
+                		if(act != null){
                     		act.putValue(Action.ACCELERATOR_KEY, ks);
                     		nextId = id + index++;
                     		if (ks != null) {
@@ -2196,27 +2228,27 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                         		actionMap.put(nextId, act);
                     		}
                 		}
-                	}else if (actionName.equals(ELANCommandFactory.REDO)){         
+                	}else if (actionName.equals(ELANCommandFactory.REDO)){
                     	act = redoMI.getAction();
-                    	if(act != null){        				
+                    	if(act != null){
                         	act.putValue(Action.ACCELERATOR_KEY, ks);
                         	nextId = id + index++;
                     		if (ks != null) {
                     			inputMap.put(ks, nextId);
                     			actionMap.put(nextId, act);
                     		}
-                        }                    	
+                        }
                 	}
             	}
-            }  
-            
+            }
+
             // add 2 more actions that are not in a menu and that are not transcription dependent
             act = new NextWindowMA(ELANCommandFactory.NEXT_WINDOW);
             ks = (KeyStroke) act.getValue(Action.ACCELERATOR_KEY);
             nextId = id + index++;
 			inputMap.put(ks, nextId);
 			actionMap.put(nextId, act);
-           
+
 			act = new PrevWindowMA(ELANCommandFactory.PREV_WINDOW);
             ks = (KeyStroke) act.getValue(Action.ACCELERATOR_KEY);
             nextId = id + index++;
@@ -2240,7 +2272,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
            playSelectionItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.CTRL_MASK));
            menuInvisible.add(playSelectionItem);   // add to menu, if only for button then to invisible menu
          */
-    	
+
     	// add actions with accelerator keys and without a menu item to the input
         // and action map
 //    	InputMap inputMap = menuBar.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -2250,7 +2282,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 //        if (inputMap instanceof ComponentInputMap && (actionMap != null)) {
 //            String id = "Act-";
 //            String nextId;
-//            
+//
 //            Object key;
 //            List<String> vals;
 //            int index = 0;
@@ -2269,26 +2301,26 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 //            		}
 //            	}
 //            }
-//            
+//
 //            // add 2 more actions that are not in a menu and that are not transcription dependent
 //            act = new NextWindowMA(ELANCommandFactory.NEXT_WINDOW);
 //            ks = (KeyStroke) act.getValue(Action.ACCELERATOR_KEY);
 //            nextId = id + index++;
 //			inputMap.put(ks, nextId);
 //			actionMap.put(nextId, act);
-//           
+//
 //			act = new PrevWindowMA(ELANCommandFactory.PREV_WINDOW);
 //            ks = (KeyStroke) act.getValue(Action.ACCELERATOR_KEY);
 //            nextId = id + index++;
 //			inputMap.put(ks, nextId);
 //			actionMap.put(nextId, act);
-//        }     
+//        }
 
         MenuAction ma;
         //menuFile.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
         //        transcriptionForThisFrame, ELANCommandFactory.CLOSE)), 3);
         menuActions.remove(ELANCommandFactory.CLOSE);
-        closeMI.setAction(ELANCommandFactory.getCommandAction(transcriptionForThisFrame, 
+        closeMI.setAction(ELANCommandFactory.getCommandAction(transcriptionForThisFrame,
         		ELANCommandFactory.CLOSE), true);
         menuActions.remove(ELANCommandFactory.SAVE);
         saveMI.setAction(ELANCommandFactory.getCommandAction(
@@ -2309,9 +2341,9 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                 ELANCommandFactory.EXPORT_EAF_2_7), true);
 
         menuActions.remove(ELANCommandFactory.MERGE_TRANSCRIPTIONS);
-        mergeTransMI.setAction(ELANCommandFactory.getCommandAction(transcriptionForThisFrame, 
+        mergeTransMI.setAction(ELANCommandFactory.getCommandAction(transcriptionForThisFrame,
         		ELANCommandFactory.MERGE_TRANSCRIPTIONS), true);
-        
+
         menuBackup.setEnabled(true);
         ButtonGroup backupGroup = new ButtonGroup();
 
@@ -2331,7 +2363,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         if ((buDelay != null) && (buDelay.compareTo(Constants.BACKUP_1) == 0)) {
             backup1MI.setSelected(true);
         }
-        
+
         JRadioButtonMenuItem backup5MI = new JRadioButtonMenuItem(ELANCommandFactory.getCommandAction(
                     transcriptionForThisFrame, ELANCommandFactory.BACKUP_5));
 
@@ -2386,24 +2418,24 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         menuActions.remove(ELANCommandFactory.ANNOTATOR_COMPARE_MULTI);
         compareAnnotatorsMI.setAction(ELANCommandFactory.getCommandAction(
         		transcriptionForThisFrame, ELANCommandFactory.ANNOTATOR_COMPARE_MULTI), true);
-        
+
         menuAnnotationServer.setEnabled(true);
-        
+
         menuAnnotationServer.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame,
             ELANCommandFactory.EXPORT_JSON_TO_SERVER)));
-        
+
         menuAnnotationServer.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
         		transcriptionForThisFrame, ELANCommandFactory.LIST_IDS_FROM_SERVER)));
-      
+
         menuExport.setEnabled(true);
 
         menuExport.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame, ELANCommandFactory.EXPORT_TOOLBOX)));
-      
+
         menuExport.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame, ELANCommandFactory.EXPORT_FLEX)));
-        
+
         menuExport.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                     transcriptionForThisFrame, ELANCommandFactory.EXPORT_CHAT)));
 
@@ -2412,7 +2444,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 
         menuExport.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame, ELANCommandFactory.EXPORT_TIGER)));
-        
+
         menuExport.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                     transcriptionForThisFrame,
                     ELANCommandFactory.EXPORT_INTERLINEAR)));
@@ -2432,15 +2464,15 @@ public class ElanFrame2 extends JFrame implements ActionListener,
             ELANCommandFactory.EXPORT_JSON)));
         menuExport.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame, ELANCommandFactory.EXPORT_WORDS)));
-        
+
         ma = new MenuAction("Menu.File.Export.Smil");
         menuActions.put("Menu.File.Export.Smil", ma);
-        menuExportSMIL = new JMenu(ma);        
+        menuExportSMIL = new JMenu(ma);
         menuExport.add(menuExportSMIL);
         menuExportSMIL.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                    transcriptionForThisFrame, ELANCommandFactory.EXPORT_SMIL_RT)));
         menuExportSMIL.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
-                transcriptionForThisFrame, ELANCommandFactory.EXPORT_SMIL_QT)));        
+                transcriptionForThisFrame, ELANCommandFactory.EXPORT_SMIL_QT)));
 
         menuExport.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                     transcriptionForThisFrame, ELANCommandFactory.EXPORT_QT_SUB)));
@@ -2454,17 +2486,17 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 
         menuExport.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame, ELANCommandFactory.CLIP_MEDIA)));
-        
+
         menuExport.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                     transcriptionForThisFrame,
                     ELANCommandFactory.EXPORT_IMAGE_FROM_WINDOW)));
         menuExport.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame,
                 ELANCommandFactory.EXPORT_FILMSTRIP)));
-        
+
         menuExport.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame, ELANCommandFactory.EXPORT_SHOEBOX)));
-        
+
         //menuImport.addSeparator();
         //menuImport.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
         //        transcriptionForThisFrame, ELANCommandFactory.IMPORT_PRAAT_GRID)));
@@ -2478,7 +2510,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         importSubtitleTextMI.setAction(ELANCommandFactory.getCommandAction(
         		transcriptionForThisFrame, ELANCommandFactory.IMPORT_SUBTITLE), true);
         menuActions.remove(ELANCommandFactory.IMPORT_RECOG_TIERS);
-        importRecogTiersMI.setAction(ELANCommandFactory.getCommandAction(transcriptionForThisFrame, 
+        importRecogTiersMI.setAction(ELANCommandFactory.getCommandAction(transcriptionForThisFrame,
         		ELANCommandFactory.IMPORT_RECOG_TIERS), true);
         // menu items with command actions
         menuActions.remove(ELANCommandFactory.UNDO);
@@ -2488,23 +2520,23 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         menuActions.remove(ELANCommandFactory.REDO);
         CommandAction redoCA = ELANCommandFactory.getRedoCA(transcriptionForThisFrame);
         redoMI.setAction(redoCA);
-                
+
         menuActions.remove(ELANCommandFactory.COPY_CURRENT_TIME);
-        copyCurrentTimeCodeMI.setAction(ELANCommandFactory.getCommandAction(transcriptionForThisFrame, 
+        copyCurrentTimeCodeMI.setAction(ELANCommandFactory.getCommandAction(transcriptionForThisFrame,
         		ELANCommandFactory.COPY_CURRENT_TIME), true);
         menuActions.remove(ELANCommandFactory.EDIT_CV_DLG);
-        editCVMI.setAction(ELANCommandFactory.getCommandAction(transcriptionForThisFrame, 
+        editCVMI.setAction(ELANCommandFactory.getCommandAction(transcriptionForThisFrame,
         		ELANCommandFactory.EDIT_CV_DLG), true);
-        
+
 		// For opening a Edit Lexicon Service Dialog
         menuActions.remove(ELANCommandFactory.EDIT_LEX_SRVC_DLG);
-        editLexiconServiceMI.setAction(ELANCommandFactory.getCommandAction(transcriptionForThisFrame, 
+        editLexiconServiceMI.setAction(ELANCommandFactory.getCommandAction(transcriptionForThisFrame,
         		ELANCommandFactory.EDIT_LEX_SRVC_DLG), true);
-        
+
         menuActions.remove(ELANCommandFactory.SET_AUTHOR);
         setAuthorMI.setAction(ELANCommandFactory.getCommandAction(
         		transcriptionForThisFrame, ELANCommandFactory.SET_AUTHOR), true);
-        
+
         menuActions.remove(ELANCommandFactory.SET_DOCUMENT_PROPERTIES);
         setDocumentPropertiesMI.setAction(ELANCommandFactory.getCommandAction(
         		transcriptionForThisFrame, ELANCommandFactory.SET_DOCUMENT_PROPERTIES), true);
@@ -2512,7 +2544,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         menuActions.remove(ELANCommandFactory.DOCUMENT_INFO);
         viewDocumentInfoMI.setAction(ELANCommandFactory.getCommandAction(
         		transcriptionForThisFrame, ELANCommandFactory.DOCUMENT_INFO), true);
-        
+
         menuActions.remove(ELANCommandFactory.ANNOTATION_DENSITY_PLOT);
         viewAnnotationDensityPlotMI.setAction(ELANCommandFactory.getCommandAction(
         		transcriptionForThisFrame, ELANCommandFactory.ANNOTATION_DENSITY_PLOT), true);
@@ -2520,7 +2552,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         menuActions.remove(ELANCommandFactory.AUDIO_SPECTROGRAM);
         viewAudioSpectrogramMI.setAction(ELANCommandFactory.getCommandAction(
         		transcriptionForThisFrame, ELANCommandFactory.AUDIO_SPECTROGRAM), true);
-        
+
         menuActions.remove(ELANCommandFactory.LINKED_FILES_DLG);
         linkedFilesMI.setAction(ELANCommandFactory.getCommandAction(
                     transcriptionForThisFrame,
@@ -2534,7 +2566,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 
         menuAnnotation.setEnabled(true);
         menuAnnotation.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
-                transcriptionForThisFrame, ELANCommandFactory.NEW_ANNOTATION))); 
+                transcriptionForThisFrame, ELANCommandFactory.NEW_ANNOTATION)));
         menuAnnotation.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame,
                 ELANCommandFactory.NEW_ANNOTATION_BEFORE)));
@@ -2542,10 +2574,10 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                 transcriptionForThisFrame,
                 ELANCommandFactory.NEW_ANNOTATION_AFTER)));
         menuAnnotation.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
-        		transcriptionForThisFrame, 
+        		transcriptionForThisFrame,
         		ELANCommandFactory.NEW_ANNOTATION_FROM_BIGIN_END_TIME_DLG)));
         menuAnnotation.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
-                transcriptionForThisFrame, ELANCommandFactory.CREATE_DEPEND_ANN)));        
+                transcriptionForThisFrame, ELANCommandFactory.CREATE_DEPEND_ANN)));
         menuAnnotation.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame,
                 ELANCommandFactory.MODIFY_ANNOTATION)));
@@ -2578,22 +2610,22 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         JMenu delMenu = new JMenu(ma);
         menuAnnotation.add(delMenu);
         delMenu.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
-        		transcriptionForThisFrame, 
+        		transcriptionForThisFrame,
         		ELANCommandFactory.DELETE_ANNOS_IN_SELECTION)));
         delMenu.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
-        		transcriptionForThisFrame, 
+        		transcriptionForThisFrame,
         		ELANCommandFactory.DELETE_ANNOS_LEFT_OF)));
         delMenu.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
-        		transcriptionForThisFrame, 
+        		transcriptionForThisFrame,
         		ELANCommandFactory.DELETE_ANNOS_RIGHT_OF)));
         delMenu.addSeparator();
         delMenu.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
-        		transcriptionForThisFrame, 
+        		transcriptionForThisFrame,
         		ELANCommandFactory.DELETE_ALL_ANNOS_LEFT_OF)));
         delMenu.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
-        		transcriptionForThisFrame, 
+        		transcriptionForThisFrame,
         		ELANCommandFactory.DELETE_ALL_ANNOS_RIGHT_OF)));
-        
+
         menuAnnotation.addSeparator();
         menuAnnotation.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
             transcriptionForThisFrame,
@@ -2602,7 +2634,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
             transcriptionForThisFrame,
             ELANCommandFactory.COPY_ANNOTATION_TREE)));
         menuAnnotation.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
-    		transcriptionForThisFrame, 
+    		transcriptionForThisFrame,
 		    ELANCommandFactory.DUPLICATE_ANNOTATION)));
         menuAnnotation.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
             transcriptionForThisFrame,
@@ -2634,12 +2666,12 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         		transcriptionForThisFrame, ELANCommandFactory.SHIFT_ALL_ANNOS_LEFT_OF)));
         shiftMenu.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
         		transcriptionForThisFrame, ELANCommandFactory.SHIFT_ALL_ANNOS_RIGHT_OF)));
-        
+
         menuAnnotation.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame, ELANCommandFactory.SHIFT_ALL_ANNOTATIONS)));
 
         menuTier.setEnabled(true);
-        
+
         menuTier.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame, ELANCommandFactory.ADD_TIER)));
         menuTier.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
@@ -2657,7 +2689,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                 transcriptionForThisFrame,
                 ELANCommandFactory.ADD_PARTICIPANT)));
         menuTier.addSeparator();
-        
+
         menuTier.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame, ELANCommandFactory.TOKENIZE_DLG)));
 
@@ -2668,23 +2700,23 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         menuTier.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
 				transcriptionForThisFrame,
 				ELANCommandFactory.COPY_TIER_DLG)));
-        
+
         menuTier.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
 				transcriptionForThisFrame,
 				ELANCommandFactory.COPY_ANN_OF_TIER)));
-        
+
         menuTier.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
 				transcriptionForThisFrame,
 				ELANCommandFactory.MERGE_TIERS)));
-        
+
         menuTier.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
 				transcriptionForThisFrame,
 				ELANCommandFactory.MERGE_TIERS_CLAS)));
-        
+
         menuTier.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
 				transcriptionForThisFrame,
 				ELANCommandFactory.MERGE_TIER_GROUP)));
-        
+
         menuTier.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame,
                 ELANCommandFactory.ANN_ON_DEPENDENT_TIER)));
@@ -2696,36 +2728,36 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         menuTier.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame,
                 ELANCommandFactory.ANN_FROM_OVERLAP_CLAS)));
-        
+
         menuTier.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame,
-                ELANCommandFactory.ANN_FROM_SUBTRACTION)));        
+                ELANCommandFactory.ANN_FROM_SUBTRACTION)));
 
         // temp
         menuTier.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame,
                 ELANCommandFactory.ANN_FROM_GAPS)));
-        
+
         menuTier.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame, ELANCommandFactory.REGULAR_ANNOTATION_DLG)));
-        
+
         menuTier.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame, ELANCommandFactory.REMOVE_ANNOTATIONS_OR_VALUES)));
-        
+
         menuTier.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
-                transcriptionForThisFrame, 
+                transcriptionForThisFrame,
                 ELANCommandFactory.ANNOTATIONS_TO_TIERS)));
-        
+
         menuTier.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame,
                 ELANCommandFactory.LABEL_AND_NUMBER)));
-        
+
         menuTier.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame,
                 ELANCommandFactory.CHANGE_CASE)));
-    
+
         menuType.setEnabled(true);
-        
+
         menuType.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame, ELANCommandFactory.ADD_TYPE)));
         menuType.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
@@ -2737,7 +2769,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         menuType.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame,
                 ELANCommandFactory.IMPORT_TYPES)));
-        
+
         //menuSearch.setEnabled(true);
         menuActions.remove(ELANCommandFactory.SEARCH_DLG);
         searchMI.setAction(ELANCommandFactory.getCommandAction(
@@ -2757,13 +2789,13 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         menuActions.remove(ELANCommandFactory.STATISTICS);
         statisticsMI.setAction(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame, ELANCommandFactory.STATISTICS), true);
-        
+
 //        CommandAction syntaxViewerAction = ELANCommandFactory.getCommandAction(
 //        		transcriptionForThisFrame, ELANCommandFactory.SYNTAX_VIEWER);
 //        if(syntaxViewerAction != null){
 //        	menuView.add(new ElanMenuItem(syntaxViewerAction));
 //        }
-        
+
         menuChangeTimePropMode.setEnabled(true);
 
         ButtonGroup timePropGroup = new ButtonGroup();
@@ -2800,19 +2832,19 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         menuItemSegmentMode.setAction(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame, ELANCommandFactory.SEGMENTATION_MODE));
         menuItemSegmentMode.setEnabled(true);
-        
+
         menuActions.remove(ELANCommandFactory.INTERLINEARIZATION_MODE);
         menuItemInterLinearMode.setAction(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame, ELANCommandFactory.INTERLINEARIZATION_MODE));
         menuItemInterLinearMode.setEnabled(true);
-        
+
         modeGroup.add(menuItemAnnoMode);
         modeGroup.add(menuItemSyncMode);
         modeGroup.add(menuItemTranscMode);
         modeGroup.add(menuItemSegmentMode);
         modeGroup.add(menuItemInterLinearMode);
-        
-//        Integer val = Preferences.getInt("LayoutManager.CurrentMode", viewerManager.getTranscription()); 
+
+//        Integer val = Preferences.getInt("LayoutManager.CurrentMode", viewerManager.getTranscription());
 //        if(val != null){
 //        	switch(val){
 //        	case ElanLayoutManager.NORMAL_MODE:
@@ -2823,14 +2855,14 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 //        		break;
 //        	case ElanLayoutManager.TRANSC_MODE:
 //        		menuItemTranscMode.setSelected(true);
-//        		
+//
 //        		break;
 //        	case ElanLayoutManager.SEGMENT_MODE:
 //        		menuItemSegmentMode.setSelected(true);
 //        		break;
-//        	}        	
-//        }  
-        
+//        	}
+//        }
+
         menuWebservices.setEnabled(true);
         menuWebservices.add(new ElanMenuItem(ELANCommandFactory.getCommandAction(
                 transcriptionForThisFrame, ELANCommandFactory.WEBLICHT_DLG)));
@@ -2900,8 +2932,8 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 
                         if (rbItem.getAction() instanceof SetLocaleMA) {
                         	if ( ((SetLocaleMA)rbItem.getAction()).getLocale().equals(ElanLocale.getLocale())) {
-	                            rbItem.setSelected(true);                            
-	
+	                            rbItem.setSelected(true);
+
 	                            break;
                         	}
                         }
@@ -2915,11 +2947,11 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 //        	ma = (MenuAction) menuActions.get(i);
 //        	ma.updateLocale();
 //        }
-        
+
         Iterator<MenuAction> it = menuActions.values().iterator();
 		while(it.hasNext()){
 			MenuAction ma = it.next();
-			if (ma != null) {				
+			if (ma != null) {
 	        	ma.updateLocale();
 			}
 		}
@@ -2976,67 +3008,67 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         Preferences.set("FrameLocation", getLocation(), transcriptionForThisFrame, false, true);// forces writing
         //Preferences.set("FrameLocation", getLocation(), null, false, true);// forces writing
     }
-    
+
     public WaveFormViewerMenuManager getWaveFormViewerMenuManager(){
     	return wfvMenuManager;
     }
-    
+
     private void loadViewerPreferences(){
-    	
+
     	Boolean boolPref = Preferences.getBool(ELANCommandFactory.GRID_VIEWER, null);
     	if (boolPref != null) {
-    		menuItemGridViewer.setSelected(boolPref);    	
+    		menuItemGridViewer.setSelected(boolPref);
     	}
-    	
+
     	boolPref = Preferences.getBool(ELANCommandFactory.TEXT_VIEWER, null);
     	if (boolPref != null) {
-    		menuItemTextViewer.setSelected(boolPref);    	
+    		menuItemTextViewer.setSelected(boolPref);
     	}
-    	
+
     	boolPref = Preferences.getBool(ELANCommandFactory.SUBTITLE_VIEWER, null);
     	if (boolPref != null) {
-    		menuItemSubtitleViewer.setSelected(boolPref);    	
+    		menuItemSubtitleViewer.setSelected(boolPref);
     	}
-    	
+
     	boolPref = Preferences.getBool(ELANCommandFactory.LEXICON_VIEWER, null);
     	if (boolPref != null) {
-    		menuItemLexiconViewer.setSelected(boolPref);    	
+    		menuItemLexiconViewer.setSelected(boolPref);
     	}
-    	
+
     	boolPref = Preferences.getBool(ELANCommandFactory.COMMENT_VIEWER, null);
     	if (boolPref != null) {
-    		menuItemCommentViewer.setSelected(boolPref);    	
+    		menuItemCommentViewer.setSelected(boolPref);
     	}
-    	
+
     	boolPref = Preferences.getBool(ELANCommandFactory.RECOGNIZER, null);
     	if (boolPref != null) {
-    		menuItemRecognizer.setSelected(boolPref);    	
+    		menuItemRecognizer.setSelected(boolPref);
     	}
-    	
+
     	boolPref = Preferences.getBool(ELANCommandFactory.METADATA_VIEWER, null);
     	if (boolPref != null) {
-    		menuItemMetaDataViewer.setSelected(boolPref);    	
+    		menuItemMetaDataViewer.setSelected(boolPref);
     	}
-    	
+
     	boolPref = Preferences.getBool(ELANCommandFactory.SIGNAL_VIEWER, null);
     	if (boolPref != null) {
-    		menuItemSignalViewer.setSelected(boolPref); 
+    		menuItemSignalViewer.setSelected(boolPref);
     	}
     	boolPref = Preferences.getBool(ELANCommandFactory.SPECTROGRAM_VIEWER, null);
     	if (boolPref != null) {
-    		menuItemSpectrogramViewer.setSelected(boolPref); 
+    		menuItemSpectrogramViewer.setSelected(boolPref);
     	}
     	boolPref = Preferences.getBool(ELANCommandFactory.INTERLINEAR_VIEWER, null);
     	if (boolPref != null) {
-    		menuItemInterLinearViewer.setSelected(boolPref);    	
-    	} 
+    		menuItemInterLinearViewer.setSelected(boolPref);
+    	}
     	boolPref = Preferences.getBool(ELANCommandFactory.TIMESERIES_VIEWER, null);
     	if (boolPref != null) {
-    		menuItemTimeSeriesViewer.setSelected(boolPref);    	
-    	} 
+    		menuItemTimeSeriesViewer.setSelected(boolPref);
+    	}
 //    	val = Preferences.getBool(ELANCommandFactory.INTERLINEAR_LEXICON_VIEWER, null);
 //    	if (val != null) {
-//    		menuItemInterLinearizerViewer.setSelected((Boolean)val);    	
+//    		menuItemInterLinearizerViewer.setSelected((Boolean)val);
 //    	}
     }
 
@@ -3111,10 +3143,10 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                     if (timeScaleBeginTime != null) {
                         viewerManager.getTimeScale().setBeginTime(timeScaleBeginTime.longValue());
                     }
-                    
+
         	            Boolean val = Preferences.getBool("MediaNavigation.FrameStepToFrameBegin",
         	                null);
-        	
+
         	            if (val != null) {
         	                viewerManager.setFrameStepsToBeginOfFrame(val);
         	            }
@@ -3139,7 +3171,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                             new Object[] { backupDelay });
                     }
                     fullyInitialized = true;
-                    
+
                     // Sometimes layoutManager is still null at this time
                     if (layoutManager != null) {
                     	layoutManager.doLayout();
@@ -3174,7 +3206,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     			Object cvMapObj = cvPrefMap.get(cv.getName());
     			if (cvMapObj instanceof Map) {
     				Map<String, Map<String, ?>> cvMap = (Map<String, Map<String, ?>>) cvMapObj;
-    				
+
     				for (CVEntry cve : cv) {
     					String id = cve.getId();
     					if (cvMap.containsKey(id)) {
@@ -3191,7 +3223,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     		}
     	}
     }
-    
+
     /**
      * @see PreferencesUser#setPreference(String, Object, Object)
      */
@@ -3211,16 +3243,16 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     @Override
 	public void preferencesChanged() {
         Dimension d = Preferences.getDimension("FrameSize", transcriptionForThisFrame);
-        
+
         if (d == null) {
         	d = Preferences.getDimension("FrameSize", null);
         }
-        
+
         // HS June 2010 correct dimension and location if they don't fit on the screen?
         // or make this a user preference?
         Rectangle wRect = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
-        
-        if (d != null) {      	
+
+        if (d != null) {
         	if (d.width > wRect.width) {
         		d.setSize(wRect.width, d.height);
         	}
@@ -3230,7 +3262,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
             setSize(d);
         }
         Point p = Preferences.getPoint("FrameLocation", transcriptionForThisFrame);
-        
+
         if (p == null) {
         	p = Preferences.getPoint("FrameLocation", null);
         }
@@ -3256,17 +3288,17 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 //        	}
             setLocation(p);
         }
-        // ?? 
+        // ??
         Locale savedLocale = (Locale) Preferences.get("Locale", null);
 
         if (savedLocale != null) {
             ElanLocale.setLocale(savedLocale);
         }
-        
+
         if (viewerManager != null) {
         	Boolean val = Preferences.getBool("MediaNavigation.FrameStepToFrameBegin",
 	                null);
-	
+
 	        if (val != null) {
 	            viewerManager.setFrameStepsToBeginOfFrame(val.booleanValue());
 	        }
@@ -3284,7 +3316,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         	int playaroundVal = intPref.intValue();
         	if (!msMode) {
         		playaroundVal = (int) (playaroundVal * viewerManager.getMasterMediaPlayer().getMilliSecondsPerSample());
-        		((PlayAroundSelectionCA) ELANCommandFactory.getCommandAction(transcriptionForThisFrame, 
+        		((PlayAroundSelectionCA) ELANCommandFactory.getCommandAction(transcriptionForThisFrame,
         				ELANCommandFactory.PLAY_AROUND_SELECTION)).setPlayAroundSelectionValue(playaroundVal);
         	}
         }
@@ -3292,29 +3324,29 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         if (floatPref != null && transcriptionForThisFrame != null) {
         	float rate = floatPref.floatValue();
         	((PlaybackRateToggleCA)ELANCommandFactory.getCommandAction(
-                	transcriptionForThisFrame, 
+                	transcriptionForThisFrame,
                 	ELANCommandFactory.PLAYBACK_RATE_TOGGLE)).setToggleValue(rate);
         }
         floatPref = Preferences.getFloat("PlaybackVolumeToggleValue", null);
         if (floatPref != null && transcriptionForThisFrame != null) {
         	float vol = floatPref.floatValue();
         	((PlaybackVolumeToggleCA)ELANCommandFactory.getCommandAction(
-                	transcriptionForThisFrame, 
+                	transcriptionForThisFrame,
                 	ELANCommandFactory.PLAYBACK_VOLUME_TOGGLE)).setToggleValue(vol);
         }
         intPref = Preferences.getInt("NumberOfBackUpFiles", null);
         if (intPref != null && transcriptionForThisFrame != null) {
         	int nf = intPref.intValue();
         	((BackupCA) ELANCommandFactory.getCommandAction(
-        			transcriptionForThisFrame, 
+        			transcriptionForThisFrame,
         			ELANCommandFactory.BACKUP)).setNumBuFiles(nf);
-        } 
+        }
 	}
-	
+
     /**
-     * Checks whether there are any changes to save and starts the saving and or 
+     * Checks whether there are any changes to save and starts the saving and or
      * closing sequence.
-     * 
+     *
      * @see #saveAndClose(boolean)
      * @see #doClose(boolean)
      */
@@ -3329,7 +3361,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 	                    ElanLocale.getString("Frame.ElanFrame.UnsavedData"),
 	                    ElanLocale.getString("Message.Warning"),
 	                    JOptionPane.YES_NO_CANCEL_OPTION);
-	
+
 	            if (response == JOptionPane.YES_OPTION) {
 	            	saveAndClose(true);
 	            } else if ((response == JOptionPane.CANCEL_OPTION) ||
@@ -3344,23 +3376,23 @@ public class ElanFrame2 extends JFrame implements ActionListener,
             }
     	}
     }
-    
+
     /**
-     * Saves the document and starts the window closing sequence. 
-     * <b>Caution: </b>does not ask the user whether or not to save changes; 
+     * Saves the document and starts the window closing sequence.
+     * <b>Caution: </b>does not ask the user whether or not to save changes;
      * it is assumed that this has been done elsewhere.
      * Called from the Close Command or from the FrameManager.
-     * 
-     * @param unregister if true this frame should be unregistered with the 
+     *
+     * @param unregister if true this frame should be unregistered with the
      * FrameManager
      * @see #checkSaveAndClose()
      * @see #doClose(boolean)
      */
     public void saveAndClose(boolean unregister) {
     	if (unregister) {
-    		FrameManager.getInstance().closeFrame(this);	
+    		FrameManager.getInstance().closeFrame(this);
     	}
-    	
+
         if ((transcriptionForThisFrame != null) &&
                 transcriptionForThisFrame.isChanged()) {
             boolean saveNewCopy = false;
@@ -3393,17 +3425,17 @@ public class ElanFrame2 extends JFrame implements ActionListener,
                 System.out.println("Save (as) cancelled");
                 return;
             }
-        }        
+        }
         doClose(unregister);
     }
-    
+
     /**
-     * Unregisteres with the FrameManager if necessary and closes 
+     * Unregisteres with the FrameManager if necessary and closes
      * the frame (without saving). Performs clean up and disposes the frame.<br>
      * Called from from Close Command or from the FrameManager.<br>
-     * <b>Caution: </b>does not check whether the document should be saved or not; 
+     * <b>Caution: </b>does not check whether the document should be saved or not;
      * it is assumed that this has been done elsewhere.
-     * @param unregister if true this frame should be unregistered with the 
+     * @param unregister if true this frame should be unregistered with the
      * FrameManager
      * @see #checkSaveAndClose()
      * @see #saveAndClose(boolean)
@@ -3414,18 +3446,18 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     	if (transcriptionForThisFrame != null) {
   		    layoutManager.isClosing();	// save various preferences
     	}
-    	
+
     	if (unregister) {
-    		FrameManager.getInstance().closeFrame(this);	
+    		FrameManager.getInstance().closeFrame(this);
     	}
-    	
-    	if (MonitoringLogger.isInitiated() && viewerManager != null 
+
+    	if (MonitoringLogger.isInitiated() && viewerManager != null
     			&& viewerManager.getTranscription() != null){
     		MonitoringLogger.getLogger(viewerManager.getTranscription()).log(MonitoringLogger.CLOSE_FILE);
-        }    
-    	
+        }
+
     	savePreferences();
-   	
+
     	//remove document from ELANCommandFactory, unregister as listener etc.
         if (transcriptionForThisFrame != null) {
             //stop the backup task, just to be sure
@@ -3433,20 +3465,20 @@ public class ElanFrame2 extends JFrame implements ActionListener,
             ELANCommandFactory.BACKUP));
             if (ca != null) {
                ca.stopBackUp();
-            }               	 
+            }
             if (viewerManager != null) {
                 viewerManager.cleanUpOnClose();
-            } 
-        	
+            }
+
         	if (layoutManager != null) {
-            	layoutManager.cleanUpOnClose();	
-        	}  
-        	
+            	layoutManager.cleanUpOnClose();
+        	}
+
             ELANCommandFactory.removeDocument(viewerManager);
             Preferences.removeDocument(transcriptionForThisFrame);
             // remove this elan frame as locale listener
-            ElanLocale.removeElanLocaleListener(transcriptionForThisFrame);            
-            
+            ElanLocale.removeElanLocaleListener(transcriptionForThisFrame);
+
             transcriptionForThisFrame = null;
             viewerManager = null;
             layoutManager = null;
@@ -3464,10 +3496,10 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     }
 
     /**
-     * Adds an action to a menu. The menu is specified by an id, the position in 
+     * Adds an action to a menu. The menu is specified by an id, the position in
      * the menu can be specified by an index. The action is supposed to handle its
      * own events.
-     * 
+     *
      * @param action the action to add to a Menu (inside a JMenuItem)
      * @param menuId the identifier of the menu, a constant from #FrameConstants
      * @param index the index to insert the action, -1 means to add at the end
@@ -3493,7 +3525,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     		} else if(menu == menuRecentFiles){
         		JMenuItem item = new JMenuItem(action);
         		if (action.getValue(Action.LONG_DESCRIPTION) != null) {
-        			if (((String) action.getValue(Action.NAME)).length() != 
+        			if (((String) action.getValue(Action.NAME)).length() !=
         					((String) action.getValue(Action.LONG_DESCRIPTION)).length()) {
         				item.setToolTipText((String) action.getValue(Action.LONG_DESCRIPTION));
             		}
@@ -3505,10 +3537,10 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     		}
     	}
     }
-    
+
     /**
-     * Looks for an Action with the specified id (== the LONG_DESCRIPTION) under 
-     * the menu identified by the menu id. If it is found it is removed from the menu 
+     * Looks for an Action with the specified id (== the LONG_DESCRIPTION) under
+     * the menu identified by the menu id. If it is found it is removed from the menu
      * and returned.
      * @param actionId the id of the Action, currently stored in the LONG_DESCRIPTION value
      * @param menuId the identifier of the menu, a constant from #FrameConstants
@@ -3545,12 +3577,12 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     	}
     	return null;
     }
-    
+
     /**
-     * Sets the action / menuitem identified by actionId selected. 
+     * Sets the action / menuitem identified by actionId selected.
      * Note: this method might need to be extended with a boolean
      * argument for the selected state.
-     * 
+     *
      * @param actionId the id of the action
      * @param menuId the id of the menu, a constant from #FrameConstants
      */
@@ -3558,7 +3590,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     	if (actionId == null) {
     		return;
     	}
-    	
+
     	Object mm = getMenuById(menuId);
     	if (mm instanceof JMenu) {
     		JMenu menu = (JMenu) mm;
@@ -3590,10 +3622,10 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 
     /**
      * Enables or disables a menu or menuitem, identified by meniId.
-     * Most menu items can also be enabled/disabled through their 
+     * Most menu items can also be enabled/disabled through their
      * ActionCommands.
-     * 
-     * @param menuId the identifier of the menu, a constant defined 
+     *
+     * @param menuId the identifier of the menu, a constant defined
      * in FrameConstants
      * @param enabled the enabled state
      */
@@ -3606,7 +3638,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 
     /**
      * Update or re-initialize the menu with the specified id.
-     * 
+     *
      * @param menuId the menu Id
      */
     public void updateMenu(int menuId) {
@@ -3618,25 +3650,25 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     		wfvMenuManager.reinitializeWaveFormMenu();
     	}
     }
-    
+
     /**
      * Looks for a number of Actions with specified id's (== the LONG_DESCRIPTION)
      * under the menu identified by the menu id. The actions that are found will be
      * enabled or disabled in the menu.
-     * 
+     *
      * @param actionIdList a list of id's of the Actions, currently stored in the LONG_DESCRIPTION value
      * @param menuId the identifier of the menu, a constant from #FrameConstants
      * @param enabled the requested enabled/disabled state
      */
-    public void enableOrDisableMenus(List<String> actionIdList, int menuId, boolean enabled) {    	    	
+    public void enableOrDisableMenus(List<String> actionIdList, int menuId, boolean enabled) {
     	Object mm = getMenuById(menuId);
 
     	if (mm instanceof JMenu) {
-			JMenu menu = (JMenu) mm;			
+			JMenu menu = (JMenu) mm;
 			if(actionIdList == null){
 				menu.setEnabled(enabled);
 				return;
-			}			
+			}
 
     		for (int i = 0; i < menu.getMenuComponentCount(); i++) {
     			Object mi = menu.getMenuComponent(i);
@@ -3652,14 +3684,14 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     				}
     			}
     		}
-    	}    			
+    	}
     }
-    
+
     /**
-     * Enables or disables all commands that are not in a menu but are instead 
+     * Enables or disables all commands that are not in a menu but are instead
      * added to the menubar's action map (and are accessible through an accelerator
-     * key). 
-     *  
+     * key).
+     *
      * @param enable the new enabled/disabled state of the commands
      */
     public void enableCommands(boolean enable) {
@@ -3673,14 +3705,14 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 			}
     	}
     }
-    
+
     /**
-     * Returns the menu item identified by one of the menu constants in 
-     * FrameConstants. This could be extended eventually to give access to 
+     * Returns the menu item identified by one of the menu constants in
+     * FrameConstants. This could be extended eventually to give access to
      * any menu (item).<br>
-     * Note: the mapping from frame constant to menu or menuitem might need 
+     * Note: the mapping from frame constant to menu or menuitem might need
      * to be reconsidered...
-     * 
+     *
      * @param id the id of the menu, as defined in FrameConstants
      * @return the corresponding menu or menuitem
      */
@@ -3729,18 +3761,18 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     	case FrameConstants.RATE_VOL_TOGGLE:
     		return menuItemRateVol;
     	case FrameConstants.MEDIA_PLAYER:
-    		return menuMediaPlayer;    	
+    		return menuMediaPlayer;
     	case FrameConstants.WAVE_FORM_VIEWER:
-    		return menuWaveform;    	
+    		return menuWaveform;
     	}
     	return null;
     }
-    
+
     /**
      * This flag is set to true after loading of preferences, which runs on a separate
      * thread. Other classes can wait for this flag to be true before performing their
      * own actions, e.g. setting the media time.
-     * 
+     *
 	 * @return Returns the fullyInitialized flag.
 	 */
 	public boolean isFullyInitialized() {
@@ -3790,8 +3822,8 @@ public class ElanFrame2 extends JFrame implements ActionListener,
      */
     public void macHandleAbout() {
     	if (menuActions != null) {
-    		
-    		MenuAction ma = null;  
+
+    		MenuAction ma = null;
     		Iterator<MenuAction> it = menuActions.values().iterator();
     		while(it.hasNext()){
     			ma = it.next();
@@ -3802,7 +3834,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     		}
     	}
     }
-    
+
     /**
      * Mac specific handling of Preferences from the main menu bar.
      */
@@ -3818,7 +3850,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 	    				break;
 	    			}
 	    		}
-	    	} 
+	    	}
 	    	if (!(ma instanceof EditPreferencesMA)) {
 	    		MenuAction ma2 = new EditPreferencesMA("Menu.Edit.Preferences.Edit", this);
 	    		ma2.actionPerformed(null);
@@ -3838,18 +3870,18 @@ public class ElanFrame2 extends JFrame implements ActionListener,
         	if (transcriptionForThisFrame != null) {
         		// do nothing if this is an empty frame because a new
         		// empty frame would be created
-        		checkSaveAndClose();	
+        		checkSaveAndClose();
         	} else {
-        		// 07-2007 changed behaviour: with one empty window, exit the 
+        		// 07-2007 changed behaviour: with one empty window, exit the
         		// application when the close button is pressed
         		doClose(true);
         	}
-        	
+
         }
-        
+
         /**
          * Notifies the FrameManager that this frame has been activated.
-         * Menus will be updated. 
+         * Menus will be updated.
          */
 		@Override
 		public void windowActivated(WindowEvent e) {
@@ -3866,11 +3898,11 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 			// store location
 			if (transcriptionForThisFrame != null) {
 				// for the time being store every change in location, not only when closing
-				// (until there is a more elaborate preferences changed event mechanism 
+				// (until there is a more elaborate preferences changed event mechanism
 				Preferences.set("FrameLocation", getLocation(), transcriptionForThisFrame, false, false);
 			} else {
 				// store a global preference, or not here?
-				// if so, the if-else block can be collapsed into a single statement 
+				// if so, the if-else block can be collapsed into a single statement
 				Preferences.set("FrameLocation", getLocation(), null, false, false);
 			}
 		}
@@ -3880,11 +3912,11 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 			// store size
 			if (transcriptionForThisFrame != null) {
 				// for the time being store every change in size, not only when closing
-				// (until there is a more elaborate preferences changed event mechanism 
+				// (until there is a more elaborate preferences changed event mechanism
 				Preferences.set("FrameSize", getSize(), transcriptionForThisFrame, false, false);
 			} else {
 				// store a global preference, or not here?
-				// if so, the if-else block can be collapsed into a single statement 
+				// if so, the if-else block can be collapsed into a single statement
 				Preferences.set("FrameSize", getSize(), null, false, false);
 			}
 		}
@@ -3893,7 +3925,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
 		public void componentShown(ComponentEvent e) {
 			// ignore
 		}
-		
+
     }
 
     @Override
@@ -3901,7 +3933,7 @@ public class ElanFrame2 extends JFrame implements ActionListener,
     	    System.out.println("Finalize ELAN window...");
     	    //super.finalize();
     }
-    
+
     public boolean isInitialized(){
     	return initialized;
     }

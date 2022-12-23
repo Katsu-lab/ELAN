@@ -798,6 +798,7 @@ mpi/eudico/client/annotator/commands/ActiveSelectionBeginCA.class
 mpi/eudico/client/annotator/multiplefilesedit/MFEFrame$EAFWriteThread.class
 mpi/eudico/client/annotator/commands/MergeTranscriptionsByAddingCommand.class
 mpi/eudico/client/annotator/commands/ActiveSelectionBoundaryAltCA.class
+mpi/eudico/client/annotator/commands/global/DataEditorMA.class
 mpi/eudico/client/annotator/commands/TierDependenciesCommand.class
 mpi/eudico/client/annotator/commands/ReplaceCVEntriesCommand.class
 mpi/eudico/client/util/Transcription2TabDelimitedText.class
@@ -2219,6 +2220,7 @@ mpi/eudico/client/annotator/interlinear/edit/model/IGTSuggestionViewerModel.clas
 mpi/eudico/client/annotator/commands/MultiFindAndReplaceCommand.class
 mpi/eudico/client/annotator/export/ExportQtSmilDialog.class
 mpi/eudico/server/corpora/clomimpl/json/WebAnnotationClient.class
+mpi/eudico/client/annotator/commands/global/InteractionInterpretationMA.class
 mpi/eudico/server/corpora/clomimpl/shoebox/interlinear/TimeCodedTranscription.class
 mpi/eudico/client/annotator/md/imdi/ImdiConstants.class
 mpi/eudico/client/annotator/commands/DeleteAllAnnotationsRightOfCA.class
@@ -2248,6 +2250,7 @@ mpi/eudico/client/annotator/export/multiplefiles/AbstractMultiFileExportSaveSett
 mpi/search/gui/PagingListModel.class
 mpi/eudico/client/annotator/commands/ExportSubtitlesCommand.class
 mpi/eudico/server/corpora/clomimpl/shoebox/AnnotationSize.class
+mpi/eudico/client/annotator/commands/global/RuleCreatorMA.class
 mpi/eudico/client/annotator/imports/multiplefiles/AbstractMFImportStep3$TextFieldHandler.class
 mpi/eudico/server/corpora/clomimpl/flex/FlexDecoderInfo.class
 mpi/eudico/client/util/Transcription2Tiger$AnnotationComparator.class
