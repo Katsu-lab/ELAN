@@ -14,8 +14,13 @@ public class InteractionInterpretationMA extends FrameMenuAction {
 
     @Override
 	public void actionPerformed(ActionEvent e) {
+
+        ProcessBuilder processBuilder = new ProcessBuilder();
+        // processBuilder.command("/Users/FukuokaKatsuya/Documents/Systems/ELAN/serve.sh");
+         processBuilder.command("/Users/FukuokaKatsuya/Documents/Systems/analysis-platform-python/serve.sh");
+
         try {
-            Process process = Runtime.getRuntime().exec("/Users/FukuokaKatsuya/Documents/Systems/ELAN/test.sh");
+            Process process = processBuilder.start();
         } catch (Exception error) {
             error.printStackTrace();
         }
